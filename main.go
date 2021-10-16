@@ -58,7 +58,7 @@ func main() {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			color.Green("thread: %v, duration: %v, count %v", thread, duration, count)
+			color.White("thread: %v, duration: %v, count %v", thread, duration, count)
 			wait.Add(count)
 			workCh = make(chan *Job, count)
 			respCh = make(chan *Response, count)
