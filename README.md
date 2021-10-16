@@ -5,7 +5,7 @@ Performance testing tool (Go)
 # Building
 
 ```go
-go github.com/crossoverJie/ptg
+go get github.com/crossoverJie/ptg
 ```
 
 # Usage
