@@ -21,7 +21,7 @@ var totalRequestTime time.Duration
 var totalResponseSize int64
 
 func main() {
-	app := &cli.App{Name: "ptg", Description: "Performance testing tool (Go)",
+	app := &cli.App{Name: "ptg", Usage: "Performance testing tool (Go)",
 		Flags: []cli.Flag{
 			&cli.IntFlag{
 				Name:  "thread",
