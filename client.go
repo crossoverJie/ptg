@@ -40,7 +40,6 @@ func NewGrpcClient() IClient {
 }
 
 func (c *client) Request() (*Response, error) {
-
 	var buf io.Reader
 	if len(c.RequestBody) > 0 {
 		buf = bytes.NewBufferString(c.RequestBody)
@@ -63,8 +62,9 @@ func (c *client) Request() (*Response, error) {
 	r := &Response{
 		RequestTime: time.Since(start),
 	}
+	SlowRequestTime = r.slowRequest()
+	FastRequestTime = r.fastRequest()
 	if err != nil {
-		fmt.Println("Request err:", err)
 		return nil, err
 	}
 
@@ -86,4 +86,17 @@ func (c *client) Request() (*Response, error) {
 	}
 	r.ResponseSize = len(body)
 	return r, nil
+}
+
+func (r *Response) fastRequest() time.Duration {
+	if r.RequestTime < FastRequestTime {
+		return r.RequestTime
+	}
+	return FastRequestTime
+}
+func (r *Response) slowRequest() time.Duration {
+	if r.RequestTime > SlowRequestTime {
+		return r.RequestTime
+	}
+	return SlowRequestTime
 }

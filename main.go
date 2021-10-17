@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -17,6 +18,9 @@ var duration int64
 
 var totalRequestTime time.Duration
 var totalResponseSize int
+var SlowRequestTime time.Duration
+var FastRequestTime = time.Minute
+var ErrorCount int32
 
 type (
 	Model interface {
@@ -66,13 +70,13 @@ func (c *countModel) Run() {
 				case job := <-c.workCh:
 					httpClient := NewHttpClient("GET", job.target, "")
 					response, err := httpClient.Request()
-					respCh <- response
 					c.wait.Done()
+					respCh <- response
 					if err != nil {
-						color.Red("request err", err)
-						return
+						atomic.AddInt32(&ErrorCount, 1)
+						color.Red("request err %v\n", err)
+						continue
 					}
-
 				}
 			}
 
@@ -94,6 +98,9 @@ func (c *countModel) Finish() {
 func (c *countModel) PrintSate() {
 	color.Green("%v requests in %v, %v read\n", c.count, units.HumanDuration(totalRequestTime), units.HumanSize(float64(totalResponseSize)))
 	color.Green("Avg Req Time:\t\t%v\n", totalRequestTime/time.Duration(c.count))
+	color.Green("Fastest Request:\t%v\n", FastRequestTime)
+	color.Green("Slowest Request:\t%v\n", SlowRequestTime)
+	color.Green("Number of Errors:\t%v\n", ErrorCount)
 }
 
 func main() {
