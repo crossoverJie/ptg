@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -22,7 +23,7 @@ type (
 
 	Response struct {
 		RequestTime  time.Duration
-		ResponseSize int64
+		ResponseSize int
 	}
 )
 
@@ -60,8 +61,7 @@ func (c *client) Request() (*Response, error) {
 	start := time.Now()
 	response, err := httpClient.Do(req)
 	r := &Response{
-		RequestTime:  time.Since(start),
-		ResponseSize: 0,
+		RequestTime: time.Since(start),
 	}
 	if err != nil {
 		fmt.Println("Request err:", err)
@@ -80,5 +80,10 @@ func (c *client) Request() (*Response, error) {
 	if response.StatusCode != http.StatusOK {
 		return nil, errors.New(fmt.Sprintf("http code not OK: %v", response.StatusCode))
 	}
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("response body read err:%v", err))
+	}
+	r.ResponseSize = len(body)
 	return r, nil
 }

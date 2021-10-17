@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/docker/go-units"
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 	"log"
@@ -9,18 +10,94 @@ import (
 	"time"
 )
 
-var thread int
-var count int
-var duration int64
 var target string
-var wait sync.WaitGroup
-var workCh chan *Job
 var respCh chan *Response
+var thread int
+var duration int64
 
 var totalRequestTime time.Duration
-var totalResponseSize int64
+var totalResponseSize int
+
+type (
+	Model interface {
+		Init()
+		Run()
+		Finish()
+		PrintSate()
+	}
+
+	Job struct {
+		thread   int
+		duration int64
+		count    int
+		target   string
+	}
+
+	countModel struct {
+		wait   sync.WaitGroup
+		count  int
+		workCh chan *Job
+	}
+)
+
+func NewCountModel(count int) Model {
+	return &countModel{count: count}
+}
+
+func (c *countModel) Init() {
+	c.wait.Add(c.count)
+	c.workCh = make(chan *Job, c.count)
+	for i := 0; i < c.count; i++ {
+		go func() {
+			c.workCh <- &Job{
+				thread:   thread,
+				duration: duration,
+				count:    c.count,
+				target:   target,
+			}
+		}()
+	}
+}
+func (c *countModel) Run() {
+	for i := 0; i < thread; i++ {
+		go func() {
+			for {
+				select {
+				case job := <-c.workCh:
+					httpClient := NewHttpClient("GET", job.target, "")
+					response, err := httpClient.Request()
+					respCh <- response
+					c.wait.Done()
+					if err != nil {
+						color.Red("request err", err)
+						return
+					}
+
+				}
+			}
+
+		}()
+	}
+	c.wait.Wait()
+}
+func (c *countModel) Finish() {
+	for i := 0; i < c.count; i++ {
+		select {
+		case res := <-respCh:
+			if res != nil {
+				totalRequestTime += res.RequestTime
+				totalResponseSize += res.ResponseSize
+			}
+		}
+	}
+}
+func (c *countModel) PrintSate() {
+	color.Green("%v requests in %v, %v read\n", c.count, units.HumanDuration(totalRequestTime), units.HumanSize(float64(totalResponseSize)))
+	color.Green("Avg Req Time:\t\t%v\n", totalRequestTime/time.Duration(c.count))
+}
 
 func main() {
+	var count int
 	app := &cli.App{Name: "ptg", Usage: "Performance testing tool (Go)",
 		Flags: []cli.Flag{
 			&cli.IntFlag{
@@ -59,19 +136,12 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			color.White("thread: %v, duration: %v, count %v", thread, duration, count)
-			wait.Add(count)
-			workCh = make(chan *Job, count)
 			respCh = make(chan *Response, count)
-			addJob(&Job{
-				thread:   thread,
-				duration: duration,
-				count:    count,
-				target:   target,
-			})
-			execJob(thread)
-			wait.Wait()
-			finishJob()
-			printState()
+			model := NewCountModel(count)
+			model.Init()
+			model.Run()
+			model.Finish()
+			model.PrintSate()
 
 			return nil
 		},
@@ -81,60 +151,4 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func addJob(job *Job) {
-
-	for i := 0; i < job.count; i++ {
-		go func() {
-			workCh <- job
-		}()
-	}
-
-}
-
-func execJob(thread int) {
-	for i := 0; i < thread; i++ {
-		go func() {
-			for {
-				select {
-				case job := <-workCh:
-					httpClient := NewHttpClient("GET", job.target, "")
-					response, err := httpClient.Request()
-					respCh <- response
-					wait.Done()
-					if err != nil {
-						color.Red("request err", err)
-						return
-					}
-
-				}
-			}
-
-		}()
-	}
-}
-
-func finishJob() {
-	for i := 0; i < count; i++ {
-		select {
-		case res := <-respCh:
-			if res != nil {
-				totalRequestTime += res.RequestTime
-				totalResponseSize += res.ResponseSize
-			}
-		}
-	}
-
-}
-
-func printState() {
-	color.Green("Avg Req Time:\t\t%v\n", totalRequestTime/time.Duration(count))
-}
-
-type Job struct {
-	thread   int
-	duration int64
-	count    int
-	target   string
 }
