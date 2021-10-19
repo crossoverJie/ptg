@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/docker/go-units"
 	"github.com/fatih/color"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -67,6 +68,11 @@ func (c *CountModel) Finish() {
 	}
 	Bar.Finish()
 }
+
+func (c *CountModel) Shutdown() {
+	os.Exit(-1)
+}
+
 func (c *CountModel) PrintSate() {
 	color.Green("%v requests in %v, %v read, and cost %v.\n", c.count, units.HumanDuration(totalRequestTime), units.HumanSize(float64(totalResponseSize)), units.HumanDuration(time.Since(c.start)))
 	color.Green("Avg Req Time:\t\t%v\n", totalRequestTime/time.Duration(c.count))

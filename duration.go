@@ -70,7 +70,11 @@ func (c *DurationModel) Finish() {
 			}
 		}
 	}
-	//Bar.Finish()
+	Bar.Finish()
+}
+
+func (c *DurationModel) Shutdown() {
+	close(c.close)
 }
 
 func (c *DurationModel) PrintSate() {

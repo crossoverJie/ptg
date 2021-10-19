@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"
+	"os/signal"
 	"time"
 )
 
@@ -31,6 +32,7 @@ type (
 		Run()
 		Finish()
 		PrintSate()
+		Shutdown()
 	}
 
 	Job struct {
@@ -100,6 +102,17 @@ func main() {
 			Bar.Set("my_green_string", "green").Set("my_blue_string", "blue")
 			Bar.Set("target", target).
 				SetWidth(120)
+
+			// shutdown
+			signCh := make(chan os.Signal, 1)
+			signal.Notify(signCh, os.Interrupt)
+			go func() {
+				select {
+				case <-signCh:
+					color.Red("shutdown....")
+					model.Shutdown()
+				}
+			}()
 
 			model.Init()
 			model.Run()
