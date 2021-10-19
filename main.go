@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"github.com/cheggaaa/pb/v3"
 	"github.com/docker/go-units"
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
@@ -22,6 +24,10 @@ var SlowRequestTime time.Duration
 var FastRequestTime = time.Minute
 var ErrorCount int32
 
+var Bar *pb.ProgressBar
+
+const PbTmpl = `{{ green "Requesting:" }} {{string . "target" | blue}}  {{ bar . "<" "-" (cycle . "↖" "↗" "↘" "↙" ) "." ">"}} {{speed . | rndcolor }} {{percent .}}`
+
 type (
 	Model interface {
 		Init()
@@ -41,11 +47,12 @@ type (
 		wait   sync.WaitGroup
 		count  int
 		workCh chan *Job
+		start  time.Time
 	}
 )
 
 func NewCountModel(count int) Model {
-	return &countModel{count: count}
+	return &countModel{count: count, start: time.Now()}
 }
 
 func (c *countModel) Init() {
@@ -70,13 +77,13 @@ func (c *countModel) Run() {
 				case job := <-c.workCh:
 					httpClient := NewHttpClient("GET", job.target, "")
 					response, err := httpClient.Request()
-					c.wait.Done()
 					respCh <- response
 					if err != nil {
-						atomic.AddInt32(&ErrorCount, 1)
 						color.Red("request err %v\n", err)
-						continue
+						atomic.AddInt32(&ErrorCount, 1)
 					}
+					Bar.Increment()
+					c.wait.Done()
 				}
 			}
 
@@ -94,9 +101,10 @@ func (c *countModel) Finish() {
 			}
 		}
 	}
+	Bar.Finish()
 }
 func (c *countModel) PrintSate() {
-	color.Green("%v requests in %v, %v read\n", c.count, units.HumanDuration(totalRequestTime), units.HumanSize(float64(totalResponseSize)))
+	color.Green("%v requests in %v, %v read, and cost %v.\n", c.count, units.HumanDuration(totalRequestTime), units.HumanSize(float64(totalResponseSize)), units.HumanDuration(time.Since(c.start)))
 	color.Green("Avg Req Time:\t\t%v\n", totalRequestTime/time.Duration(c.count))
 	color.Green("Fastest Request:\t%v\n", FastRequestTime)
 	color.Green("Slowest Request:\t%v\n", SlowRequestTime)
@@ -143,8 +151,26 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			color.White("thread: %v, duration: %v, count %v", thread, duration, count)
+			if count == 0 && duration == 0 {
+				return errors.New("request count and duration must choose one")
+			}
+
+			if count > 0 && duration > 0 {
+				return errors.New("request count and duration can only choose one")
+			}
 			respCh = make(chan *Response, count)
-			model := NewCountModel(count)
+			var model Model
+			if count > 0 {
+				model = NewCountModel(count)
+				Bar = pb.ProgressBarTemplate(PbTmpl).Start(count)
+			} else {
+				model = NewDurationModel(duration)
+				Bar = pb.ProgressBarTemplate(PbTmpl).Start(int(duration))
+			}
+			Bar.Set("my_green_string", "green").Set("my_blue_string", "blue")
+			Bar.Set("target", target).
+				SetWidth(120)
+
 			model.Init()
 			model.Run()
 			model.Finish()
