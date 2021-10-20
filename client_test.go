@@ -14,6 +14,14 @@ func Test_client_Request(t *testing.T) {
 	}
 	fmt.Println(request)
 }
+func Test_client_Request2(t *testing.T) {
+	httpClient := NewHttpClient("POST", "http://localhost:8080/post", `{"name":"abc"}`)
+	request, err := httpClient.Request()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(request)
+}
 
 func TestHuman(t *testing.T) {
 	size := units.HumanSize(1024)

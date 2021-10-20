@@ -40,7 +40,7 @@ func (c *CountModel) Run() {
 			for {
 				select {
 				case job := <-c.workCh:
-					httpClient := NewHttpClient("GET", job.target, "")
+					httpClient := NewHttpClient(method, job.target, body)
 					response, err := httpClient.Request()
 					respCh <- response
 					if err != nil {

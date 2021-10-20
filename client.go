@@ -1,12 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -19,6 +19,7 @@ type (
 		Method      string
 		Url         string
 		RequestBody string
+		httpClient  *http.Client
 	}
 
 	Response struct {
@@ -32,6 +33,12 @@ func NewHttpClient(method, url, requestBody string) IClient {
 		Method:      method,
 		Url:         url,
 		RequestBody: requestBody,
+		httpClient: &http.Client{
+			Transport: &http.Transport{
+				ResponseHeaderTimeout: time.Millisecond * time.Duration(1000),
+				DisableKeepAlives:     true,
+			},
+		},
 	}
 }
 
@@ -40,25 +47,30 @@ func NewGrpcClient() IClient {
 }
 
 func (c *client) Request() (*Response, error) {
-	var buf io.Reader
+	var payload io.Reader
 	if len(c.RequestBody) > 0 {
-		buf = bytes.NewBufferString(c.RequestBody)
+		payload = strings.NewReader(`{"name":"abc"}`)
 	}
-	req, err := http.NewRequest(c.Method, c.Url, buf)
+	req, err := http.NewRequest(c.Method, c.Url, payload)
+	//req.Close = true
 	if err != nil {
 		fmt.Println("An error occured doing request", err)
 		return nil, err
 	}
 	req.Header.Add("User-Agent", "ptg")
-
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			ResponseHeaderTimeout: time.Millisecond * time.Duration(1000),
-		},
+	for k, v := range headerMap {
+		req.Header.Add(k, v)
 	}
 
+	//httpClient := &http.Client{
+	//	Transport: &http.Transport{
+	//		ResponseHeaderTimeout: time.Millisecond * time.Duration(1000),
+	//		DisableKeepAlives: true,
+	//	},
+	//}
+
 	start := time.Now()
-	response, err := httpClient.Do(req)
+	response, err := c.httpClient.Do(req)
 	r := &Response{
 		RequestTime: time.Since(start),
 	}
@@ -82,7 +94,7 @@ func (c *client) Request() (*Response, error) {
 	}
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("response body read err:%v", err))
+		return nil, errors.New(fmt.Sprintf("response bodyPath read err:%v", err))
 	}
 	r.ResponseSize = len(body)
 	return r, nil

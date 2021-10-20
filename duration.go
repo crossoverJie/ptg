@@ -44,7 +44,7 @@ func (c *DurationModel) Run() {
 	for i := 0; i < thread; i++ {
 		go func() {
 			for {
-				httpClient := NewHttpClient("GET", target, "")
+				httpClient := NewHttpClient(method, target, body)
 				response, err := httpClient.Request()
 				atomic.AddInt32(&c.totalRequest, 1)
 				respCh <- response

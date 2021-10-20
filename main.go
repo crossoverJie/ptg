@@ -5,9 +5,11 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
@@ -15,6 +17,11 @@ var target string
 var respCh chan *Response
 var thread int
 var duration int64
+var method string
+var bodyPath string
+var body string
+var headerSlice cli.StringSlice
+var headerMap map[string]string
 
 var totalRequestTime time.Duration
 var totalResponseSize int
@@ -73,6 +80,30 @@ func main() {
 				Destination: &count,
 			},
 			&cli.StringFlag{
+				Name:        "HTTP method",
+				Usage:       "-m GET",
+				DefaultText: "GET",
+				Aliases:     []string{"M"},
+				Required:    false,
+				Destination: &method,
+			},
+			&cli.StringFlag{
+				Name:        "bodyPath",
+				Usage:       "-bodyPath bodyPath.json",
+				DefaultText: "GET",
+				Aliases:     []string{"body"},
+				Required:    false,
+				Destination: &bodyPath,
+			},
+			&cli.StringSliceFlag{
+				Name:        "header",
+				Aliases:     []string{"H"},
+				Usage:       "HTTP header to add to request, e.g. \"-H Content-Type: application/json\"",
+				Required:    false,
+				DefaultText: "",
+				Destination: &headerSlice,
+			},
+			&cli.StringFlag{
 				Name:        "target",
 				Usage:       "http://gobyexample.com",
 				DefaultText: "http://gobyexample.com",
@@ -83,6 +114,7 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			color.White("thread: %v, duration: %v, count %v", thread, duration, count)
+			// ##########App init##########
 			if count == 0 && duration == 0 {
 				return errors.New("request count and duration must choose one")
 			}
@@ -90,6 +122,27 @@ func main() {
 			if count > 0 && duration > 0 {
 				return errors.New("request count and duration can only choose one")
 			}
+
+			if method == "" {
+				method = "GET"
+			}
+			if bodyPath != "" {
+				bytes, err := ioutil.ReadFile(bodyPath)
+				if err != nil {
+					color.Red("could not read file: %s", bodyPath)
+					return err
+				}
+				body = string(bytes)
+			}
+			if headerSlice.Value() != nil {
+				headerMap = make(map[string]string, len(headerSlice.Value()))
+				for _, s := range headerSlice.Value() {
+					splitN := strings.SplitN(s, ":", 2)
+					headerMap[splitN[0]] = splitN[1]
+				}
+			}
+			// ##########App init##########
+
 			respCh = make(chan *Response, count)
 			var model Model
 			if count > 0 {
