@@ -15,7 +15,7 @@ NAME:
    ptg - Performance testing tool (Go)
 
 USAGE:
-   ptg [global options] command [command options] [arguments...]
+   ___go_build_github_com_crossoverJie_ptg [global options] command [command options] [arguments...]
 
 COMMANDS:
    help, h  Shows a list of commands or help for one command
@@ -25,11 +25,10 @@ GLOBAL OPTIONS:
    --duration value, -d value      -d 10s (default: Duration of test in seconds, Default 10s)
    --request value, -c value       -c 100 (default: 100)
    --HTTP value, -M value          -m GET (default: GET)
-   --bodyPath value, --body value  -bodyPath bodyPath.json (default: GET)
+   --bodyPath value, --body value  -bodyPath bodyPath.json
    --header value, -H value        HTTP header to add to request, e.g. "-H Content-Type: application/json"
    --target value, --tg value      http://gobyexample.com (default: http://gobyexample.com)
    --help, -h                      show help (default: false)
-2021/10/21 01:16:00 Required flags "thread, tg" not set
 ```
 
 ```shell script

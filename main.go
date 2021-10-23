@@ -90,7 +90,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "bodyPath",
 				Usage:       "-bodyPath bodyPath.json",
-				DefaultText: "GET",
+				DefaultText: "",
 				Aliases:     []string{"body"},
 				Required:    false,
 				Destination: &bodyPath,
