@@ -152,7 +152,6 @@ func main() {
 				model = NewDurationModel(duration)
 				Bar = pb.ProgressBarTemplate(PbTmpl).Start(int(duration))
 			}
-			Bar.Set("my_green_string", "green").Set("my_blue_string", "blue")
 			Bar.Set("target", target).
 				SetWidth(120)
 
