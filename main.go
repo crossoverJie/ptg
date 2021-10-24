@@ -143,12 +143,14 @@ func main() {
 			}
 			// ##########App init##########
 
-			respCh = make(chan *Response, count)
 			var model Model
 			if count > 0 {
+				respCh = make(chan *Response, count)
 				model = NewCountModel(count)
 				Bar = pb.ProgressBarTemplate(PbTmpl).Start(count)
 			} else {
+				// 防止写入 goroutine 阻塞，导致泄露。
+				respCh = make(chan *Response, 3*thread)
 				model = NewDurationModel(duration)
 				Bar = pb.ProgressBarTemplate(PbTmpl).Start(int(duration))
 			}

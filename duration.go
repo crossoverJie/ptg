@@ -13,6 +13,7 @@ type DurationModel struct {
 	timeCh       chan struct{}
 	close        chan struct{}
 	totalRequest int32
+	shutdown     int32
 }
 
 func NewDurationModel(duration int64) Model {
@@ -28,6 +29,9 @@ func (c *DurationModel) Init() {
 		for {
 			select {
 			case <-time.Tick(1 * time.Second):
+				if atomic.LoadInt32(&c.shutdown) == 1 {
+					return
+				}
 				Bar.Increment()
 			}
 		}
@@ -36,6 +40,7 @@ func (c *DurationModel) Init() {
 		select {
 		case <-time.After(time.Second * time.Duration(c.duration)):
 			close(c.close)
+			return
 		}
 	}()
 
@@ -44,6 +49,9 @@ func (c *DurationModel) Run() {
 	for i := 0; i < thread; i++ {
 		go func() {
 			for {
+				if atomic.LoadInt32(&c.shutdown) == 1 {
+					return
+				}
 				httpClient := NewHttpClient(method, target, body)
 				response, err := httpClient.Request()
 				atomic.AddInt32(&c.totalRequest, 1)
@@ -61,6 +69,9 @@ func (c *DurationModel) Finish() {
 		select {
 		case _, ok := <-c.close:
 			if !ok {
+				Bar.SetCurrent(duration)
+				Bar.Finish()
+				atomic.StoreInt32(&c.shutdown, 1)
 				return
 			}
 		case res := <-respCh:
@@ -70,7 +81,6 @@ func (c *DurationModel) Finish() {
 			}
 		}
 	}
-	Bar.Finish()
 }
 
 func (c *DurationModel) Shutdown() {

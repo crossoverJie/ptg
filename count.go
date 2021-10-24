@@ -39,7 +39,10 @@ func (c *CountModel) Run() {
 		go func() {
 			for {
 				select {
-				case job := <-c.workCh:
+				case job, ok := <-c.workCh:
+					if !ok {
+						return
+					}
 					httpClient := NewHttpClient(method, job.target, body)
 					response, err := httpClient.Request()
 					respCh <- response
@@ -67,9 +70,11 @@ func (c *CountModel) Finish() {
 		}
 	}
 	Bar.Finish()
+	close(c.workCh)
 }
 
 func (c *CountModel) Shutdown() {
+	close(c.workCh)
 	os.Exit(-1)
 }
 
