@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	IClient interface {
+	Client interface {
 		Request() (*Response, error)
 	}
 
@@ -28,7 +28,7 @@ type (
 	}
 )
 
-func NewHttpClient(method, url, requestBody string) IClient {
+func NewHttpClient(method, url, requestBody string) Client {
 	return &client{
 		Method:      method,
 		Url:         url,
@@ -42,7 +42,7 @@ func NewHttpClient(method, url, requestBody string) IClient {
 	}
 }
 
-func NewGrpcClient() IClient {
+func NewGrpcClient() Client {
 	return nil
 }
 
