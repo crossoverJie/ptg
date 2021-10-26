@@ -32,5 +32,17 @@ GLOBAL OPTIONS:
 ```
 
 ```shell script
-btb -t 10 -d 30s -c 100 -tg "http://gobyexample.com"
+btb -t 20 -d 10  -tg "http://gobyexample.com"
+```
+Benchmark test for 10 seconds, using 20 goroutines.
+
+output:
+```shell script
+Requesting: http://gobyexample.com  <----------------------------------------------------------------------> 1 p/s 100.00%
+
+43 requests in 10 seconds, 13.88MB read.
+Avg Req Time:           358.512071ms
+Fastest Request:        93.518704ms
+Slowest Request:        840.680771ms
+Number of Errors:       0
 ```
