@@ -38,7 +38,7 @@ Benchmark test for 10 seconds, using 20 goroutines.
 
 output:
 ```shell script
-Requesting: http://gobyexample.com  <----------------------------------------------------------------------> 1 p/s 100.00%
+Requesting: http://gobyexample.com  <---------------> 1 p/s 100.00%
 
 43 requests in 10 seconds, 13.88MB read.
 Avg Req Time:           358.512071ms
