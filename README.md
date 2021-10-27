@@ -1,6 +1,7 @@
 # ptg
 Performance testing tool (Go)
 
+![](pic/show.gif)
 
 # Building
 
