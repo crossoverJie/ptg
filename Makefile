@@ -16,6 +16,10 @@ clean:
 	$(RMTARGZ)
 
 
+git-tag:
+	git tag $(VERSION); \
+	git push origin $(VERSION); \
+
 release:
 	# Clean
 	$(GOCLEAN)
