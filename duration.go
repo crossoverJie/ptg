@@ -52,7 +52,7 @@ func (c *DurationModel) Run() {
 				if atomic.LoadInt32(&c.shutdown) == 1 {
 					return
 				}
-				httpClient := NewHttpClient(method, target, body)
+				httpClient := NewClient(method, target, body)
 				response, err := httpClient.Request()
 				atomic.AddInt32(&c.totalRequest, 1)
 				respCh <- response

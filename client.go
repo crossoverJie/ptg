@@ -15,7 +15,7 @@ type (
 		Request() (*Response, error)
 	}
 
-	client struct {
+	httpClient struct {
 		Method      string
 		Url         string
 		RequestBody string
@@ -28,25 +28,26 @@ type (
 	}
 )
 
-func NewHttpClient(method, url, requestBody string) Client {
-	return &client{
-		Method:      method,
-		Url:         url,
-		RequestBody: requestBody,
-		httpClient: &http.Client{
-			Transport: &http.Transport{
-				ResponseHeaderTimeout: time.Millisecond * time.Duration(1000),
-				DisableKeepAlives:     true,
+func NewClient(method, url, requestBody string) Client {
+	if protocol == Http {
+		return &httpClient{
+			Method:      method,
+			Url:         url,
+			RequestBody: requestBody,
+			httpClient: &http.Client{
+				Transport: &http.Transport{
+					ResponseHeaderTimeout: time.Millisecond * time.Duration(1000),
+					DisableKeepAlives:     true,
+				},
 			},
-		},
+		}
+	} else {
+		return NewGrpcClient()
 	}
+
 }
 
-func NewGrpcClient() Client {
-	return nil
-}
-
-func (c *client) Request() (*Response, error) {
+func (c *httpClient) Request() (*Response, error) {
 	var payload io.Reader
 	if len(c.RequestBody) > 0 {
 		payload = strings.NewReader(`{"name":"abc"}`)

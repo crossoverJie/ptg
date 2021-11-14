@@ -13,25 +13,36 @@ import (
 	"time"
 )
 
-var target string
-var respCh chan *Response
-var thread int
-var duration int64
-var method string
-var bodyPath string
-var body string
-var headerSlice cli.StringSlice
-var headerMap map[string]string
+// init bind variable
+var (
+	target       string
+	respCh       chan *Response
+	thread       int
+	duration     int64
+	method       string
+	bodyPath     string
+	body         string
+	headerSlice  cli.StringSlice
+	headerMap    map[string]string
+	protocol     string // http/grpc
+	protocolFile string // xx/xx/xx.proto
+	fqn          string // fully-qualified method name:[package.Service.Method]
+)
 
-var totalRequestTime time.Duration
-var totalResponseSize int
-var SlowRequestTime time.Duration
-var FastRequestTime = time.Minute
-var ErrorCount int32
+var (
+	totalRequestTime  time.Duration
+	totalResponseSize int
+	SlowRequestTime   time.Duration
+	FastRequestTime   = time.Minute
+	ErrorCount        int32
+	Bar               *pb.ProgressBar
+)
 
-var Bar *pb.ProgressBar
-
-const PbTmpl = `{{ green "Requesting:" }} {{string . "target" | blue}}  {{ bar . "<" "-" (cycle . "↖" "↗" "↘" "↙" ) "." ">"}} {{speed . | rndcolor }} {{percent .}}`
+const (
+	PbTmpl = `{{ green "Requesting:" }} {{string . "target" | blue}}  {{ bar . "<" "-" (cycle . "↖" "↗" "↘" "↙" ) "." ">"}} {{speed . | rndcolor }} {{percent .}}`
+	Http   = "http"
+	Grpc   = "grpc"
+)
 
 type (
 	Model interface {
@@ -63,6 +74,30 @@ func main() {
 				Required:    true,
 				Destination: &thread,
 			},
+			&cli.StringFlag{
+				Name:        "Request protocol",
+				Usage:       "-proto http/grpc",
+				DefaultText: "http",
+				Aliases:     []string{"proto"},
+				Required:    true,
+				Destination: &protocol,
+			},
+			&cli.StringFlag{
+				Name:        "protocol buffer file path",
+				Usage:       "-pf /file/order.proto",
+				DefaultText: "",
+				Aliases:     []string{"pf"},
+				Required:    false,
+				Destination: &protocolFile,
+			},
+			&cli.StringFlag{
+				Name:        "fully-qualified method name",
+				Usage:       "-fqn package.Service.Method",
+				DefaultText: "",
+				Aliases:     []string{"fqn"},
+				Required:    false,
+				Destination: &fqn,
+			},
 			&cli.Int64Flag{
 				Name:        "duration",
 				Usage:       "-d 10s",
@@ -89,7 +124,7 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:        "bodyPath",
-				Usage:       "-bodyPath bodyPath.json",
+				Usage:       "-body bodyPath.json",
 				DefaultText: "",
 				Aliases:     []string{"body"},
 				Required:    false,
@@ -105,8 +140,8 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:        "target",
-				Usage:       "http://gobyexample.com",
-				DefaultText: "http://gobyexample.com",
+				Usage:       "http://gobyexample.com/grpc:127.0.0.1:5000",
+				DefaultText: "",
 				Aliases:     []string{"tg"},
 				Required:    true,
 				Destination: &target,

@@ -7,7 +7,7 @@ import (
 )
 
 func Test_client_Request(t *testing.T) {
-	httpClient := NewHttpClient("GET", "http://gobyexample.com", "")
+	httpClient := NewClient("GET", "http://gobyexample.com", "")
 	request, err := httpClient.Request()
 	if err != nil {
 		fmt.Println(err)
@@ -15,7 +15,7 @@ func Test_client_Request(t *testing.T) {
 	fmt.Println(request)
 }
 func Test_client_Request2(t *testing.T) {
-	httpClient := NewHttpClient("POST", "http://localhost:8080/post", `{"name":"abc"}`)
+	httpClient := NewClient("POST", "http://localhost:8080/post", `{"name":"abc"}`)
 	request, err := httpClient.Request()
 	if err != nil {
 		fmt.Println(err)
@@ -26,4 +26,10 @@ func Test_client_Request2(t *testing.T) {
 func TestHuman(t *testing.T) {
 	size := units.HumanSize(1024)
 	fmt.Println(size)
+}
+
+func TestBytes(t *testing.T) {
+	body := []byte{3, 14, 159, 2, 65, 35, 9}
+	fmt.Println(string(body))
+
 }

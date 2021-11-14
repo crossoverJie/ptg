@@ -43,7 +43,7 @@ func (c *CountModel) Run() {
 					if !ok {
 						return
 					}
-					httpClient := NewHttpClient(method, job.target, body)
+					httpClient := NewClient(method, job.target, body)
 					response, err := httpClient.Request()
 					respCh <- response
 					if err != nil {
