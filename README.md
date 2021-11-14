@@ -10,7 +10,7 @@ go get github.com/crossoverJie/ptg
 ```
 
 ```shell script
-wget https://github.com/crossoverJie/btb/releases/download/v${version}/${file_name}
+wget https://github.com/crossoverJie/ptg/releases/download/${version}/ptg-${os}-${version}.tar.gz
 ```
 
 # Usage
