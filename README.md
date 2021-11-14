@@ -36,7 +36,7 @@ GLOBAL OPTIONS:
 ```
 ## http
 ```shell script
-btb -t 20 -d 10  -tg "http://gobyexample.com"
+ptg -t 20 -d 10 -proto http -tg "http://gobyexample.com"
 ```
 
 Benchmark test for 10 seconds, using 20 goroutines.
@@ -55,7 +55,7 @@ Number of Errors:       0
 ## gRPC(unary call)
 
 ```shell script
-./ptg -t 10 -c 100 -proto grpc  -pf /xx/xx.proto -fqn hello.Hi.Say -body test.json  -tg "127.0.0.1:5000"
+ptg -t 10 -c 100 -proto grpc  -pf /xx/xx.proto -fqn hello.Hi.Say -body test.json  -tg "127.0.0.1:5000"
 ```
 
 output:
