@@ -1,14 +1,15 @@
-package main
+package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"github.com/crossoverJie/ptg/meta"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"path/filepath"
 	"strings"
@@ -27,9 +28,10 @@ type grpcClient struct {
 	stub    grpcdynamic.Stub
 	mtd     *desc.MethodDescriptor
 	message []*dynamic.Message
+	meta    *meta.Meta
 }
 
-func NewGrpcClient() Client {
+func NewGrpcClient(meta *meta.Meta) Client {
 	one.Do(func() {
 		if client == nil {
 			var (
@@ -37,22 +39,24 @@ func NewGrpcClient() Client {
 				importPath []string
 			)
 
-			client = &grpcClient{}
+			client = &grpcClient{
+				meta: meta,
+			}
 			opts = append(opts, grpc.WithInsecure())
-			conn, err := grpc.DialContext(context.Background(), target, opts...)
+			conn, err := grpc.DialContext(context.Background(), meta.Target(), opts...)
 			if err != nil {
 				panic(fmt.Sprintf("create grpc connection err %v", err))
 			}
 			client.stub = grpcdynamic.NewStub(conn)
 
-			dir := filepath.Dir(protocolFile)
+			dir := filepath.Dir(meta.ProtocolFile())
 			importPath = append(importPath, dir)
-			client.mtd, err = GetMethodDescFromProto(fqn, protocolFile, importPath)
+			client.mtd, err = GetMethodDescFromProto(meta.Fqn(), meta.ProtocolFile(), importPath)
 			if err != nil {
 				panic(fmt.Sprintf("create grpc MethodDescriptor err %v", err))
 			}
 
-			client.message, err = getDataForCall(client.mtd)
+			client.message, err = client.getDataForCall()
 			if err != nil {
 				panic(fmt.Sprintf("create grpc message err %v", err))
 			}
@@ -62,20 +66,38 @@ func NewGrpcClient() Client {
 	return client
 }
 
-func (g *grpcClient) Request() (*Response, error) {
+func (g *grpcClient) Request() (*meta.Response, error) {
 	//fmt.Printf("%p \n", &*g)\
 	start := time.Now()
 	rpc, err := g.stub.InvokeRpc(context.Background(), g.mtd, g.message[0])
-	r := &Response{
+	r := &meta.Response{
 		RequestTime: time.Since(start),
 	}
-	SlowRequestTime = r.slowRequest()
-	FastRequestTime = r.fastRequest()
+	//SlowRequestTime = r.slowRequest()
+	//FastRequestTime = r.fastRequest()
+	meta.GetResult().SetSlowRequestTime(r.SlowRequest()).
+		SetFastRequestTime(r.FastRequest())
 	if err != nil {
 		return nil, err
 	}
 	r.ResponseSize = len(rpc.String())
 	return r, nil
+}
+
+func (g *grpcClient) getDataForCall() ([]*dynamic.Message, error) {
+	var inputs []*dynamic.Message
+	var err error
+	if inputs, err = getPayloadMessages([]byte(g.meta.Body()), g.mtd); err != nil {
+		return nil, err
+	}
+
+	if len(inputs) > 0 {
+		unaryInput := inputs[0]
+
+		return []*dynamic.Message{unaryInput}, nil
+	}
+
+	return inputs, nil
 }
 
 func GetMethodDescFromProto(call, proto string, imports []string) (*desc.MethodDescriptor, error) {
@@ -162,22 +184,6 @@ func findServiceSymbol(resolved map[string]*desc.FileDescriptor, fullyQualifiedN
 		}
 	}
 	return nil, fmt.Errorf("cannot find service %q", fullyQualifiedName)
-}
-
-func getDataForCall(mtd *desc.MethodDescriptor) ([]*dynamic.Message, error) {
-	var inputs []*dynamic.Message
-	var err error
-	if inputs, err = getPayloadMessages([]byte(body), mtd); err != nil {
-		return nil, err
-	}
-
-	if len(inputs) > 0 {
-		unaryInput := inputs[0]
-
-		return []*dynamic.Message{unaryInput}, nil
-	}
-
-	return inputs, nil
 }
 
 func getPayloadMessages(inputData []byte, mtd *desc.MethodDescriptor) ([]*dynamic.Message, error) {

@@ -1,8 +1,9 @@
-package main
+package client
 
 import (
-	"errors"
 	"fmt"
+	"github.com/crossoverJie/ptg/meta"
+	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -10,44 +11,15 @@ import (
 	"time"
 )
 
-type (
-	Client interface {
-		Request() (*Response, error)
-	}
-
-	httpClient struct {
-		Method      string
-		Url         string
-		RequestBody string
-		httpClient  *http.Client
-	}
-
-	Response struct {
-		RequestTime  time.Duration
-		ResponseSize int
-	}
-)
-
-func NewClient(method, url, requestBody string) Client {
-	if protocol == Http {
-		return &httpClient{
-			Method:      method,
-			Url:         url,
-			RequestBody: requestBody,
-			httpClient: &http.Client{
-				Transport: &http.Transport{
-					ResponseHeaderTimeout: time.Millisecond * time.Duration(1000),
-					DisableKeepAlives:     true,
-				},
-			},
-		}
-	} else {
-		return NewGrpcClient()
-	}
-
+type httpClient struct {
+	Method      string
+	Url         string
+	RequestBody string
+	httpClient  *http.Client
+	meta        *meta.Meta
 }
 
-func (c *httpClient) Request() (*Response, error) {
+func (c *httpClient) Request() (*meta.Response, error) {
 	var payload io.Reader
 	if len(c.RequestBody) > 0 {
 		payload = strings.NewReader(`{"name":"abc"}`)
@@ -59,7 +31,7 @@ func (c *httpClient) Request() (*Response, error) {
 		return nil, err
 	}
 	req.Header.Add("User-Agent", "ptg")
-	for k, v := range headerMap {
+	for k, v := range c.meta.HeaderMap() {
 		req.Header.Add(k, v)
 	}
 
@@ -72,11 +44,13 @@ func (c *httpClient) Request() (*Response, error) {
 
 	start := time.Now()
 	response, err := c.httpClient.Do(req)
-	r := &Response{
+	r := &meta.Response{
 		RequestTime: time.Since(start),
 	}
-	SlowRequestTime = r.slowRequest()
-	FastRequestTime = r.fastRequest()
+	//SlowRequestTime = r.slowRequest()
+	//FastRequestTime = r.fastRequest()
+	meta.GetResult().SetSlowRequestTime(r.SlowRequest()).
+		SetFastRequestTime(r.FastRequest())
 	if err != nil {
 		return nil, err
 	}
@@ -99,17 +73,4 @@ func (c *httpClient) Request() (*Response, error) {
 	}
 	r.ResponseSize = len(body)
 	return r, nil
-}
-
-func (r *Response) fastRequest() time.Duration {
-	if r.RequestTime < FastRequestTime {
-		return r.RequestTime
-	}
-	return FastRequestTime
-}
-func (r *Response) slowRequest() time.Duration {
-	if r.RequestTime > SlowRequestTime {
-		return r.RequestTime
-	}
-	return SlowRequestTime
 }

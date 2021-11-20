@@ -1,35 +1,39 @@
 package main
 
 import (
+	ptgclient "github.com/crossoverJie/ptg/client"
+	"github.com/crossoverJie/ptg/meta"
+	"github.com/crossoverJie/ptg/model"
 	"github.com/docker/go-units"
 	"github.com/fatih/color"
 	"os"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
 type CountModel struct {
 	wait   sync.WaitGroup
 	count  int
-	workCh chan *Job
+	workCh chan *model.Job
 	start  time.Time
+	result *meta.Result
+	meta   *meta.Meta
 }
 
-func NewCountModel(count int) Model {
-	return &CountModel{count: count, start: time.Now()}
+func NewCountModel(count int) model.Model {
+	return &CountModel{count: count, start: time.Now(), result: meta.GetResult(), meta: meta.GetMeta()}
 }
 
 func (c *CountModel) Init() {
 	c.wait.Add(c.count)
-	c.workCh = make(chan *Job, c.count)
+	c.workCh = make(chan *model.Job, c.count)
 	for i := 0; i < c.count; i++ {
 		go func() {
-			c.workCh <- &Job{
-				thread:   thread,
-				duration: duration,
-				count:    c.count,
-				target:   target,
+			c.workCh <- &model.Job{
+				Thread:   thread,
+				Duration: duration,
+				Count:    c.count,
+				Target:   target,
 			}
 		}()
 	}
@@ -43,12 +47,13 @@ func (c *CountModel) Run() {
 					if !ok {
 						return
 					}
-					httpClient := NewClient(method, job.target, body)
+					httpClient := ptgclient.NewClient(method, job.Target, body, c.meta)
 					response, err := httpClient.Request()
-					respCh <- response
+					c.meta.RespCh() <- response
 					if err != nil {
 						color.Red("request err %v\n", err)
-						atomic.AddInt32(&ErrorCount, 1)
+						//atomic.AddInt32(&ErrorCount, 1)
+						c.result.IncrementErrorCount()
 					}
 					Bar.Increment()
 					c.wait.Done()
@@ -62,10 +67,12 @@ func (c *CountModel) Run() {
 func (c *CountModel) Finish() {
 	for i := 0; i < c.count; i++ {
 		select {
-		case res := <-respCh:
+		case res := <-c.meta.RespCh():
 			if res != nil {
-				totalRequestTime += res.RequestTime
-				totalResponseSize += res.ResponseSize
+				//totalRequestTime += res.RequestTime
+				//totalResponseSize += res.ResponseSize
+				meta.GetResult().SetTotalRequestTime(res.RequestTime).
+					SetTotalResponseSize(res.ResponseSize)
 			}
 		}
 	}
@@ -79,9 +86,9 @@ func (c *CountModel) Shutdown() {
 }
 
 func (c *CountModel) PrintSate() {
-	color.Green("%v requests in %v, %v read, and cost %v.\n", c.count, units.HumanDuration(totalRequestTime), units.HumanSize(float64(totalResponseSize)), units.HumanDuration(time.Since(c.start)))
-	color.Green("Avg Req Time:\t\t%v\n", totalRequestTime/time.Duration(c.count))
-	color.Green("Fastest Request:\t%v\n", FastRequestTime)
-	color.Green("Slowest Request:\t%v\n", SlowRequestTime)
-	color.Green("Number of Errors:\t%v\n", ErrorCount)
+	color.Green("%v requests in %v, %v read, and cost %v.\n", c.count, units.HumanDuration(c.result.TotalRequestTime()), units.HumanSize(float64(c.result.TotalResponseSize())), units.HumanDuration(time.Since(c.start)))
+	color.Green("Avg Req Time:\t\t%v\n", c.result.TotalRequestTime()/time.Duration(c.count))
+	color.Green("Fastest Request:\t%v\n", c.result.FastRequestTime())
+	color.Green("Slowest Request:\t%v\n", c.result.SlowRequestTime())
+	color.Green("Number of Errors:\t%v\n", c.result.ErrorCount())
 }
