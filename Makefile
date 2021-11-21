@@ -40,3 +40,9 @@ release:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD).exe
 	tar czvf ${BINARY}-win64-${VERSION}.tar.gz ./${BINARY}.exe
 	$(GOCLEAN)
+
+
+gen-go-proto:
+	@protoc --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    reflect/gen/test.proto

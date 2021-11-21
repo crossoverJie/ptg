@@ -1,0 +1,49 @@
+
+syntax = "proto3";
+option go_package = "github.com/crossoverJie/ptg/proto/order/v1";
+
+package order.v1;
+
+service OrderService{
+
+  rpc Create(OrderApiCreate) returns (Order) {}
+
+  rpc Close(CloseApiCreate) returns (Order) {}
+
+}
+
+service TestService{
+  rpc TestList(ReasonApi) returns (Reasons){}
+}
+message ReasonApi{
+  int32 id = 1;
+}
+
+message Reasons{
+  repeated Reason reason = 1;
+}
+
+message Reason{
+  int32 id = 1;
+  string remark = 2;
+}
+
+
+
+message CloseApiCreate{
+  int64 order_id = 1;
+}
+
+
+message OrderApiCreate{
+  int64 order_id = 1;
+  repeated int64 user_id = 2;
+  string remark = 3;
+  repeated int32 reason_id = 4;
+}
+
+message Order{
+  int64 order_id = 1;
+  repeated Reason reason = 2;
+}
+

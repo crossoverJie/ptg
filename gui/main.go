@@ -15,11 +15,11 @@ func main() {
 	entry := widget.NewEntry()
 	textArea := widget.NewMultiLineEntry()
 	meta.NewResult()
-	body := `{"order_id":27669403038384131}`
+	body := `{"order_id":20,"user_id":[20],"remark":"Hello","reason_id":[10]}`
 	grpcClient := client.NewGrpcClient(meta.NewMeta("127.0.0.1:5000", "",
 		"", body,
-		client.Grpc, "/Users/chenjie/Documents/dev/easi/easi-order-service/proto/order/v1/order.proto",
-		"order.v1.OrderService.Detail", 1, 1, nil, nil))
+		client.Grpc, "./reflect/gen/test.proto",
+		"order.v1.OrderService.Create", 1, 1, nil, nil))
 
 	form := &widget.Form{
 		Items: []*widget.FormItem{ // we can specify items in the constructor
