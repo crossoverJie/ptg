@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/widget"
 	"github.com/crossoverJie/ptg/client"
@@ -11,6 +12,7 @@ import (
 func main() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Form Widget")
+	myWindow.Resize(fyne.NewSize(500, 500))
 
 	entry := widget.NewEntry()
 	textArea := widget.NewMultiLineEntry()
