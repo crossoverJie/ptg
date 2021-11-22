@@ -2,6 +2,7 @@ package reflect
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	v1 "github.com/crossoverJie/ptg/reflect/gen"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
@@ -62,6 +63,10 @@ func TestParseReflect_InvokeRpc(t *testing.T) {
 		panic(err)
 	}
 	fmt.Println(rpc.String())
+	fmt.Println("=========")
+	//marshal ,_:= proto.Marshal(rpc)
+	marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
+	fmt.Println(string(marshalIndent))
 }
 
 func TestServer(t *testing.T) {
