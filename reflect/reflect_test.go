@@ -93,7 +93,12 @@ func (o *Order) Create(ctx context.Context, in *v1.OrderApiCreate) (*v1.Order, e
 
 	fmt.Println(in.OrderId)
 	return &v1.Order{
-		OrderId: 123,
+		OrderId: in.OrderId,
 		Reason:  nil,
 	}, nil
+}
+
+func TestParseServiceMethod(t *testing.T) {
+	s, m, err := ParseServiceMethod("order.v1.OrderService.Create")
+	fmt.Println(s, m, err)
 }

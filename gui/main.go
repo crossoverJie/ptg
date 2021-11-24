@@ -1,41 +1,160 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"github.com/crossoverJie/ptg/client"
-	"github.com/crossoverJie/ptg/meta"
+	"github.com/crossoverJie/ptg/reflect"
+	_ "github.com/crossoverJie/ptg/reflect"
+	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
+	"google.golang.org/grpc"
+	"image/color"
 	"log"
+	"strings"
 )
 
 func main() {
-	myApp := app.New()
-	myWindow := myApp.NewWindow("Form Widget")
-	myWindow.Resize(fyne.NewSize(500, 500))
+	app := app.New()
+	window := app.NewWindow("Form Widget")
+	window.Resize(fyne.NewSize(1000, 500))
 
-	entry := widget.NewEntry()
-	textArea := widget.NewMultiLineEntry()
-	meta.NewResult()
-	body := `{"order_id":20,"user_id":[20],"remark":"Hello","reason_id":[10]}`
-	grpcClient := client.NewGrpcClient(meta.NewMeta("127.0.0.1:5000", "",
-		"", body,
-		client.Grpc, "./reflect/gen/test.proto",
-		"order.v1.OrderService.Create", 1, 1, nil, nil))
+	requestEntry := widget.NewMultiLineEntry()
+	requestEntry.SetPlaceHolder("Input request json")
+	requestEntry.Wrapping = fyne.TextWrapWord
+	responseEntry := widget.NewMultiLineEntry()
+	responseEntry.Wrapping = fyne.TextWrapWord
+	reqLabel := widget.NewLabel("Request")
+	targetInput := widget.NewEntry()
+	targetInput.SetText("127.0.0.1:5000")
+	targetInput.SetPlaceHolder("")
+	infinite := widget.NewProgressBarInfinite()
+	var parse *reflect.ParseReflect
 
-	form := &widget.Form{
-		Items: []*widget.FormItem{ // we can specify items in the constructor
-			//{Text: "Entry", Widget: entry},
-			{Text: "json", Widget: textArea}},
-		OnSubmit: func() { // optional, handle form submission
-			log.Println("Form submitted:", entry.Text)
-			log.Println("multiline:", textArea.Text)
-			request, err := grpcClient.Request()
-			log.Println("grpcClient:", request, err)
+	content := container.NewVBox()
+	fileOpen := dialog.NewFileOpen(func(closer fyne.URIReadCloser, err error) {
+		if err != nil {
+			fmt.Println(err)
+		}
+		if closer != nil {
+			parse, err = reflect.NewParse(closer.URI().Path())
+			if err != nil {
+				dialog.ShowError(err, window)
+			}
+			maps := parse.ServiceInfoMaps()
+			fmt.Println(maps)
+			serviceAccordion := widget.NewAccordion()
+			for k, v := range maps {
+				var methods []string
+				for _, s := range v {
+					methods = append(methods, k+"."+s)
+				}
+				serviceAccordion.Append(&widget.AccordionItem{
+					Title: k,
+					Detail: widget.NewRadioGroup(methods, func(s string) {
+						service, method, err := reflect.ParseServiceMethod(s)
+						if err != nil {
+							dialog.ShowError(err, window)
+						}
+						json, err := parse.RequestJSON(service, method)
+						if err != nil {
+							dialog.ShowError(err, window)
+						}
+						requestEntry.SetText(json)
+						reqLabel.SetText("Request" + ":" + s)
 
-			myWindow.Close()
-		},
-	}
-	myWindow.SetContent(form)
-	myWindow.ShowAndRun()
+					}),
+					Open: false,
+				})
+			}
+
+			content.Add(serviceAccordion)
+		}
+	}, window)
+
+	toolbar := widget.NewToolbar(
+		widget.NewToolbarAction(theme.ContentAddIcon(), func() {
+			fileOpen.Show()
+		}),
+		widget.NewToolbarAction(theme.ViewRefreshIcon(), func() {
+
+		}),
+		widget.NewToolbarAction(theme.ContentCopyIcon(), func() {}),
+		widget.NewToolbarAction(theme.ContentPasteIcon(), func() {}),
+		widget.NewToolbarSeparator(),
+		widget.NewToolbarAction(theme.HelpIcon(), func() {
+			log.Println("Display help")
+		}),
+	)
+	content.Add(toolbar)
+
+	gradient := canvas.NewVerticalGradient(theme.FocusColor(), color.Transparent)
+	content.Add(gradient)
+
+	leftTool := container.New(layout.NewGridLayout(2), content)
+
+	//
+	rightTool := container.NewVBox()
+	form := widget.NewForm(&widget.FormItem{
+		Text:     "Target:",
+		Widget:   targetInput,
+		HintText: "Input target url",
+	})
+	rightTool.Add(form)
+	rightTool.Add(reqLabel)
+	rightTool.Add(requestEntry)
+	rightTool.Add(widget.NewButtonWithIcon("RUN", theme.MediaPlayIcon(), func() {
+		if requestEntry.Text == "" {
+			dialog.ShowError(errors.New("request json can not nil"), window)
+			return
+		}
+		infinite.Show()
+		infinite.Start()
+		serviceInfo := strings.Split(reqLabel.Text, ":")[1]
+		service, method, err := reflect.ParseServiceMethod(serviceInfo)
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+		mds, err := parse.MethodDescriptor(service, method)
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+		var opts []grpc.DialOption
+		opts = append(opts, grpc.WithInsecure())
+		ctx := context.Background()
+		conn, err := grpc.DialContext(ctx, targetInput.Text, opts...)
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+		stub := grpcdynamic.NewStub(conn)
+		rpc, err := parse.InvokeRpc(ctx, stub, mds, requestEntry.Text)
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+		infinite.Hide()
+		marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
+		responseEntry.SetText(string(marshalIndent))
+	}))
+	rightTool.Add(infinite)
+	infinite.Hide()
+
+	rightTool.Add(widget.NewLabel("Response:"))
+	rightTool.Add(responseEntry)
+
+	split := container.NewHSplit(leftTool, rightTool)
+
+	window.SetContent(split)
+	window.ShowAndRun()
 }
