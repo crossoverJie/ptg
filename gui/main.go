@@ -38,12 +38,13 @@ func main() {
 	var parse *reflect.ParseReflect
 
 	content := container.NewVBox()
-	fileOpen := dialog.NewFileOpen(func(closer fyne.URIReadCloser, err error) {
+	fileOpen := dialog.NewFileOpen(func(uri fyne.URIReadCloser, err error) {
 		if err != nil {
-			fmt.Println(err)
+			dialog.ShowError(err, window)
+			return
 		}
-		if closer != nil {
-			parse, err = reflect.NewParse(closer.URI().Path())
+		if uri != nil {
+			parse, err = reflect.NewParse(uri.URI().Path())
 			if err != nil {
 				dialog.ShowError(err, window)
 				return
@@ -75,7 +76,6 @@ func main() {
 					Open: false,
 				})
 			}
-
 			content.Add(serviceAccordion)
 		}
 	}, window)
