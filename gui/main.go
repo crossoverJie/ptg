@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -17,14 +16,13 @@ import (
 	_ "github.com/crossoverJie/ptg/reflect"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"google.golang.org/grpc"
-	"image/color"
 	"log"
 	"strings"
 )
 
 func main() {
 	app := app.New()
-	window := app.NewWindow("Form Widget")
+	window := app.NewWindow("Ptg gRPC client")
 	window.Resize(fyne.NewSize(1000, 500))
 
 	requestEntry := widget.NewMultiLineEntry()
@@ -36,7 +34,7 @@ func main() {
 	targetInput := widget.NewEntry()
 	targetInput.SetText("127.0.0.1:5000")
 	targetInput.SetPlaceHolder("")
-	infinite := widget.NewProgressBarInfinite()
+	processBar := widget.NewProgressBarInfinite()
 	var parse *reflect.ParseReflect
 
 	content := container.NewVBox()
@@ -48,6 +46,7 @@ func main() {
 			parse, err = reflect.NewParse(closer.URI().Path())
 			if err != nil {
 				dialog.ShowError(err, window)
+				return
 			}
 			maps := parse.ServiceInfoMaps()
 			fmt.Println(maps)
@@ -67,6 +66,7 @@ func main() {
 						json, err := parse.RequestJSON(service, method)
 						if err != nil {
 							dialog.ShowError(err, window)
+							return
 						}
 						requestEntry.SetText(json)
 						reqLabel.SetText("Request" + ":" + s)
@@ -95,11 +95,7 @@ func main() {
 		}),
 	)
 	content.Add(toolbar)
-
-	gradient := canvas.NewVerticalGradient(theme.FocusColor(), color.Transparent)
-	content.Add(gradient)
-
-	leftTool := container.New(layout.NewGridLayout(2), content)
+	leftTool := container.New(layout.NewGridLayout(1), content)
 
 	//
 	rightTool := container.NewVBox()
@@ -116,8 +112,8 @@ func main() {
 			dialog.ShowError(errors.New("request json can not nil"), window)
 			return
 		}
-		infinite.Show()
-		infinite.Start()
+		processBar.Show()
+		processBar.Start()
 		serviceInfo := strings.Split(reqLabel.Text, ":")[1]
 		service, method, err := reflect.ParseServiceMethod(serviceInfo)
 		if err != nil {
@@ -140,15 +136,17 @@ func main() {
 		stub := grpcdynamic.NewStub(conn)
 		rpc, err := parse.InvokeRpc(ctx, stub, mds, requestEntry.Text)
 		if err != nil {
+			processBar.Stop()
+			processBar.Hide()
 			dialog.ShowError(err, window)
 			return
 		}
-		infinite.Hide()
+		processBar.Hide()
 		marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
 		responseEntry.SetText(string(marshalIndent))
 	}))
-	rightTool.Add(infinite)
-	infinite.Hide()
+	rightTool.Add(processBar)
+	processBar.Hide()
 
 	rightTool.Add(widget.NewLabel("Response:"))
 	rightTool.Add(responseEntry)
