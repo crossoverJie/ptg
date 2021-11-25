@@ -17,7 +17,8 @@ import (
 )
 
 type ParseReflect struct {
-	filename       string
+	filename string
+	// serviceInfoMap[sds.GetFullyQualifiedName()] = methodInfos
 	serviceInfoMap map[string][]string
 	fds            *desc.FileDescriptor
 }
@@ -93,7 +94,7 @@ func convertMessageToMap(message *desc.MessageDescriptor) map[string]interface{}
 	for _, fieldDescriptor := range message.GetFields() {
 		fieldName := fieldDescriptor.GetName()
 		if fieldDescriptor.IsRepeated() {
-			// 如果是一个数组的话，就返回 nil 吧
+			// Array temporary nil
 			m[fieldName] = nil
 			continue
 		}
