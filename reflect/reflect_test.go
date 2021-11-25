@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"strings"
 	"testing"
 )
 
@@ -126,4 +127,9 @@ type User struct {
 
 func (*User) Create(ctx context.Context, in *user.UserApiCreate) (*user.User, error) {
 	return &user.User{UserId: in.UserId}, nil
+}
+
+func TestCommon(t *testing.T) {
+	x := "order.v1.OrderService.Detail-2"
+	fmt.Println(strings.Split(x, "-")[1])
 }

@@ -1,45 +1,64 @@
 package main
 
 import (
+	"fmt"
 	"github.com/crossoverJie/ptg/reflect"
 	"sync/atomic"
 )
 
 var (
-	parseContainer map[string]*reflect.ParseReflect
-	containerMap   map[int64]string
-	index          int64
+	parseContainerMap map[string]*ParseReflectAdapter
+	// index->filename
+	containerMap map[string]string
+	index        int64
 )
 
 type ParseReflectAdapter struct {
 	parse *reflect.ParseReflect
-	index int64
+	index string
 }
 
-func RegisterReflect(filename string) (*reflect.ParseReflect, bool, error) {
-	parse, ok := parseContainer[filename]
+func (p *ParseReflectAdapter) Parse() *reflect.ParseReflect {
+	return p.parse
+}
+func (p *ParseReflectAdapter) Index() string {
+	return p.index
+}
+
+func RegisterReflect(filename string) (*ParseReflectAdapter, bool, error) {
+	parseAdapter, ok := parseContainerMap[filename]
 	if ok {
-		return parse, true, nil
+		return parseAdapter, true, nil
 	}
-	parse, err := reflect.NewParse(filename)
+	newParse, err := reflect.NewParse(filename)
 	if err != nil {
 		return nil, false, err
 	}
-	if parseContainer == nil {
-		parseContainer = make(map[string]*reflect.ParseReflect)
+	if parseContainerMap == nil {
+		parseContainerMap = make(map[string]*ParseReflectAdapter)
 	}
-	parseContainer[filename] = parse
+	if containerMap == nil {
+		containerMap = make(map[string]string)
+	}
 
-	return parse, false, nil
+	index := genIndex()
+	containerMap[index] = filename
+	parseAdapter = &ParseReflectAdapter{
+		parse: newParse,
+		index: index,
+	}
+	parseContainerMap[filename] = parseAdapter
+
+	return parseAdapter, false, nil
 }
 
 func ClearReflect() {
-	parseContainer = nil
+	parseContainerMap = nil
 }
 
 func ResetReflect() {
 	var filenameList []string
-	for k := range parseContainer {
+	for k := range parseContainerMap {
 		filenameList = append(filenameList, k)
 	}
 	ClearReflect()
@@ -48,10 +67,16 @@ func ResetReflect() {
 	}
 }
 
-func ParseContainer() map[string]*reflect.ParseReflect {
-	return parseContainer
+func ParseContainer() map[string]*ParseReflectAdapter {
+	return parseContainerMap
 }
 
-func genIndex() int64 {
-	return atomic.AddInt64(&index, 1)
+func genIndex() string {
+	return fmt.Sprint(atomic.AddInt64(&index, 1))
+}
+
+func GetParseAdapter(index string) *ParseReflectAdapter {
+	filename := containerMap[index]
+	registerReflect, _, _ := RegisterReflect(filename)
+	return registerReflect
 }

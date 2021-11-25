@@ -37,7 +37,6 @@ func main() {
 	processBar := widget.NewProgressBarInfinite()
 	serviceAccordionRemove := false
 	serviceAccordion := widget.NewAccordion()
-	var parse *reflect.ParseReflect
 
 	content := container.NewVBox()
 	fileOpen := dialog.NewFileOpen(func(uri fyne.URIReadCloser, err error) {
@@ -46,8 +45,7 @@ func main() {
 			return
 		}
 		if uri != nil {
-			reflectParse, exit, err := RegisterReflect(uri.URI().Path())
-			parse = reflectParse
+			parseAdapter, exit, err := RegisterReflect(uri.URI().Path())
 			if err != nil {
 				dialog.ShowError(err, window)
 				return
@@ -57,7 +55,7 @@ func main() {
 				return
 			}
 
-			maps := parse.ServiceInfoMaps()
+			maps := parseAdapter.Parse().ServiceInfoMaps()
 			fmt.Println(maps)
 			if serviceAccordionRemove {
 				content.Add(serviceAccordion)
@@ -66,7 +64,7 @@ func main() {
 			for k, v := range maps {
 				var methods []string
 				for _, s := range v {
-					methods = append(methods, k+"."+s)
+					methods = append(methods, k+"."+s+"-"+fmt.Sprint(parseAdapter.Index()))
 				}
 				serviceAccordion.Append(&widget.AccordionItem{
 					Title: k,
@@ -74,12 +72,13 @@ func main() {
 						if s == "" {
 							return
 						}
-						service, method, err := reflect.ParseServiceMethod(s)
+						methodInfo := strings.Split(s, "-")
+						service, method, err := reflect.ParseServiceMethod(methodInfo[0])
 						if err != nil {
 							dialog.ShowError(err, window)
 							return
 						}
-						json, err := parse.RequestJSON(service, method)
+						json, err := GetParseAdapter(methodInfo[1]).Parse().RequestJSON(service, method)
 						if err != nil {
 							dialog.ShowError(err, window)
 							return
@@ -136,11 +135,13 @@ func main() {
 		processBar.Show()
 		processBar.Start()
 		serviceInfo := strings.Split(reqLabel.Text, ":")[1]
-		service, method, err := reflect.ParseServiceMethod(serviceInfo)
+		methodInfo := strings.Split(serviceInfo, "-")
+		service, method, err := reflect.ParseServiceMethod(methodInfo[0])
 		if err != nil {
 			dialog.ShowError(err, window)
 			return
 		}
+		parse := GetParseAdapter(methodInfo[1]).Parse()
 		mds, err := parse.MethodDescriptor(service, method)
 		if err != nil {
 			dialog.ShowError(err, window)
