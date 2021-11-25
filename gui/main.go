@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -16,13 +17,13 @@ import (
 	_ "github.com/crossoverJie/ptg/reflect"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"google.golang.org/grpc"
-	"log"
+	"net/url"
 	"strings"
 )
 
 func main() {
 	app := app.New()
-	window := app.NewWindow("Ptg gRPC client")
+	window := app.NewWindow("PTG gRPC client")
 	window.Resize(fyne.NewSize(1000, 500))
 
 	requestEntry := widget.NewMultiLineEntry()
@@ -35,6 +36,7 @@ func main() {
 	targetInput.SetText("127.0.0.1:6001")
 	targetInput.SetPlaceHolder("")
 	processBar := widget.NewProgressBarInfinite()
+	processBar.Hide()
 	serviceAccordionRemove := false
 	serviceAccordion := widget.NewAccordion()
 
@@ -99,7 +101,7 @@ func main() {
 			fileOpen.Show()
 		}),
 		widget.NewToolbarAction(theme.ViewRefreshIcon(), func() {
-
+			dialog.ShowInformation("Notice", "coming soon", window)
 		}),
 		widget.NewToolbarAction(theme.DeleteIcon(), func() {
 			ClearReflect()
@@ -110,12 +112,17 @@ func main() {
 		}),
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarAction(theme.HelpIcon(), func() {
-			log.Println("Display help")
+			w := fyne.CurrentApp().NewWindow("Help")
+			u, _ := url.Parse("https://github.com/crossoverJie/ptg")
+			w.SetContent(container.New(layout.NewCenterLayout(), widget.NewHyperlink("help?", u)))
+			w.Resize(fyne.NewSize(130, 100))
+			w.SetFixedSize(true)
+			w.Show()
 		}),
 	)
 	content.Add(toolbar)
 	content.Add(serviceAccordion)
-	leftTool := container.New(layout.NewGridLayout(1), content)
+	leftTool := container.New(layout.NewGridLayout(1), content, canvas.NewImageFromResource(theme.FyneLogo()))
 
 	//
 	rightTool := container.NewVBox()
@@ -158,7 +165,6 @@ func main() {
 		stub := grpcdynamic.NewStub(conn)
 		rpc, err := parse.InvokeRpc(ctx, stub, mds, requestEntry.Text)
 		if err != nil {
-			processBar.Stop()
 			processBar.Hide()
 			dialog.ShowError(err, window)
 			return
@@ -168,7 +174,6 @@ func main() {
 		responseEntry.SetText(string(marshalIndent))
 	}))
 	rightTool.Add(processBar)
-	processBar.Hide()
 
 	rightTool.Add(widget.NewLabel("Response:"))
 	rightTool.Add(responseEntry)

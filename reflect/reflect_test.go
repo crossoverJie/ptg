@@ -8,6 +8,7 @@ import (
 	"github.com/crossoverJie/ptg/reflect/gen/user"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
 	"strings"
@@ -80,6 +81,7 @@ func TestServer(t *testing.T) {
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	v1.RegisterOrderServiceServer(grpcServer, &Order{})
+	reflection.Register(grpcServer)
 
 	fmt.Println("gRPC server started at ", port)
 	if err := grpcServer.Serve(lis); err != nil {
