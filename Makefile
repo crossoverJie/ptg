@@ -46,3 +46,9 @@ gen-go-proto:
 	@protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     reflect/gen/user.proto
+
+pkg-win:
+	fyne package -os windows -src gui/ -icon pic/gopher.png -name ${BINARY} -appVersion $(VERSION)
+
+pkg-macos:
+	fyne package -os darwin -exe gui/main.go -icon pic/gopher.png -name ${BINARY} -appVersion $(VERSION)
