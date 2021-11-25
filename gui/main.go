@@ -32,9 +32,11 @@ func main() {
 	responseEntry.Wrapping = fyne.TextWrapWord
 	reqLabel := widget.NewLabel("Request")
 	targetInput := widget.NewEntry()
-	targetInput.SetText("127.0.0.1:5000")
+	targetInput.SetText("127.0.0.1:6001")
 	targetInput.SetPlaceHolder("")
 	processBar := widget.NewProgressBarInfinite()
+	serviceAccordionRemove := false
+	serviceAccordion := widget.NewAccordion()
 	var parse *reflect.ParseReflect
 
 	content := container.NewVBox()
@@ -44,14 +46,23 @@ func main() {
 			return
 		}
 		if uri != nil {
-			parse, err = reflect.NewParse(uri.URI().Path())
+			reflectParse, exit, err := RegisterReflect(uri.URI().Path())
+			parse = reflectParse
 			if err != nil {
 				dialog.ShowError(err, window)
 				return
 			}
+			if exit {
+				dialog.ShowError(errors.New("proto file already exists"), window)
+				return
+			}
+
 			maps := parse.ServiceInfoMaps()
 			fmt.Println(maps)
-			serviceAccordion := widget.NewAccordion()
+			if serviceAccordionRemove {
+				content.Add(serviceAccordion)
+				serviceAccordionRemove = false
+			}
 			for k, v := range maps {
 				var methods []string
 				for _, s := range v {
@@ -60,9 +71,13 @@ func main() {
 				serviceAccordion.Append(&widget.AccordionItem{
 					Title: k,
 					Detail: widget.NewRadioGroup(methods, func(s string) {
+						if s == "" {
+							return
+						}
 						service, method, err := reflect.ParseServiceMethod(s)
 						if err != nil {
 							dialog.ShowError(err, window)
+							return
 						}
 						json, err := parse.RequestJSON(service, method)
 						if err != nil {
@@ -75,8 +90,8 @@ func main() {
 					}),
 					Open: false,
 				})
+
 			}
-			content.Add(serviceAccordion)
 		}
 	}, window)
 
@@ -87,14 +102,20 @@ func main() {
 		widget.NewToolbarAction(theme.ViewRefreshIcon(), func() {
 
 		}),
-		widget.NewToolbarAction(theme.ContentCopyIcon(), func() {}),
-		widget.NewToolbarAction(theme.ContentPasteIcon(), func() {}),
+		widget.NewToolbarAction(theme.DeleteIcon(), func() {
+			ClearReflect()
+			content.Remove(serviceAccordion)
+			serviceAccordionRemove = true
+			serviceAccordion.Items = nil
+			dialog.ShowInformation("Notice", "all proto files have been reset", window)
+		}),
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarAction(theme.HelpIcon(), func() {
 			log.Println("Display help")
 		}),
 	)
 	content.Add(toolbar)
+	content.Add(serviceAccordion)
 	leftTool := container.New(layout.NewGridLayout(1), content)
 
 	//

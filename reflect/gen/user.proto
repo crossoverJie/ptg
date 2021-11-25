@@ -1,0 +1,29 @@
+
+syntax = "proto3";
+option go_package = "github.com/crossoverJie/ptg/proto/user/v2";
+
+package user.v2;
+
+service UserService{
+
+  rpc Create(UserApiCreate) returns (User) {}
+
+  rpc List(Empty) returns (UserList) {}
+
+}
+
+message Empty{}
+
+
+
+message UserApiCreate{
+  int64 user_id = 1;
+}
+message User{
+  int64 user_id = 1;
+}
+
+message UserList{
+  repeated User userList=1;
+}
+

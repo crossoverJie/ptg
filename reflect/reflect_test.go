@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	v1 "github.com/crossoverJie/ptg/reflect/gen"
+	"github.com/crossoverJie/ptg/reflect/gen/user"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"google.golang.org/grpc"
 	"log"
@@ -70,7 +71,7 @@ func TestParseReflect_InvokeRpc(t *testing.T) {
 }
 
 func TestServer(t *testing.T) {
-	port := 5000
+	port := 6001
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -101,4 +102,28 @@ func (o *Order) Create(ctx context.Context, in *v1.OrderApiCreate) (*v1.Order, e
 func TestParseServiceMethod(t *testing.T) {
 	s, m, err := ParseServiceMethod("order.v1.OrderService.Create")
 	fmt.Println(s, m, err)
+}
+
+func TestUserServer(t *testing.T) {
+	port := 7001
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	var opts []grpc.ServerOption
+	grpcServer := grpc.NewServer(opts...)
+	user.RegisterUserServiceServer(grpcServer, &User{})
+
+	fmt.Println("gRPC user server started at ", port)
+	if err := grpcServer.Serve(lis); err != nil {
+		panic(err)
+	}
+}
+
+type User struct {
+	user.UnimplementedUserServiceServer
+}
+
+func (*User) Create(ctx context.Context, in *user.UserApiCreate) (*user.User, error) {
+	return &user.User{UserId: in.UserId}, nil
 }
