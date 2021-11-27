@@ -80,5 +80,5 @@ Number of Errors:       0
 
 # TODO
 
-[x] cli support.
-[x] GUI support.
+- [x] cli support.
+- [x] GUI support.
