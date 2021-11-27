@@ -23,18 +23,19 @@ import (
 )
 
 func main() {
+	ptgApp := InitApp()
 	app := app.New()
-	window := app.NewWindow("PTG gRPC client")
-	window.Resize(fyne.NewSize(1000, 500))
+	window := app.NewWindow(ptgApp.AppName)
+	window.Resize(fyne.NewSize(ptgApp.AppWidth, ptgApp.AppHeight))
 
 	requestEntry := widget.NewMultiLineEntry()
-	requestEntry.SetPlaceHolder("Input request json")
+	requestEntry.SetPlaceHolder(ptgApp.RightRequest.RequestEntryPlaceHolder)
 	requestEntry.Wrapping = fyne.TextWrapWord
 	responseEntry := widget.NewMultiLineEntry()
 	responseEntry.Wrapping = fyne.TextWrapWord
-	reqLabel := widget.NewLabel("Request:")
+	reqLabel := widget.NewLabel("")
 	targetInput := widget.NewEntry()
-	targetInput.SetText("127.0.0.1:6001")
+	targetInput.SetText(ptgApp.RightRequest.TargetInputText)
 	targetInput.SetPlaceHolder("")
 	processBar := widget.NewProgressBarInfinite()
 	processBar.Hide()
@@ -113,7 +114,7 @@ func main() {
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarAction(theme.HelpIcon(), func() {
 			w := fyne.CurrentApp().NewWindow("Help")
-			u, _ := url.Parse("https://github.com/crossoverJie/ptg")
+			u, _ := url.Parse(ptgApp.HelpUrl)
 			w.SetContent(container.New(layout.NewCenterLayout(), widget.NewHyperlink("help?", u)))
 			w.Resize(fyne.NewSize(130, 100))
 			w.SetFixedSize(true)
@@ -183,7 +184,7 @@ func main() {
 
 	responseContainer := container.New(layout.NewGridLayoutWithColumns(1))
 	responseContainer.Add(responseEntry)
-	responseLabel := widget.NewLabel("Response:")
+	responseLabel := widget.NewLabel(ptgApp.RightResponse.ResponseLabelText)
 	responsePanel := container.NewBorder(responseLabel, nil, nil, nil)
 	responsePanel.Add(responseContainer)
 
@@ -193,9 +194,4 @@ func main() {
 
 	window.SetContent(split)
 	window.ShowAndRun()
-}
-
-func RequestErr(window fyne.Window, pb *widget.ProgressBarInfinite, err error) {
-	pb.Hide()
-	dialog.ShowError(err, window)
 }
