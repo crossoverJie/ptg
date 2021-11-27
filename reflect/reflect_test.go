@@ -13,6 +13,7 @@ import (
 	"net"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestParseProto(t *testing.T) {
@@ -95,6 +96,7 @@ type Order struct {
 
 func (o *Order) Create(ctx context.Context, in *v1.OrderApiCreate) (*v1.Order, error) {
 
+	time.Sleep(200 * time.Millisecond)
 	fmt.Println(in.OrderId)
 	return &v1.Order{
 		OrderId: in.OrderId,
@@ -128,6 +130,7 @@ type User struct {
 }
 
 func (*User) Create(ctx context.Context, in *user.UserApiCreate) (*user.User, error) {
+	time.Sleep(200 * time.Millisecond)
 	return &user.User{UserId: in.UserId}, nil
 }
 

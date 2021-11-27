@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -16,6 +17,7 @@ import (
 	_ "github.com/crossoverJie/ptg/reflect"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"google.golang.org/grpc"
+	"image/color"
 	"net/url"
 	"strings"
 )
@@ -30,7 +32,7 @@ func main() {
 	requestEntry.Wrapping = fyne.TextWrapWord
 	responseEntry := widget.NewMultiLineEntry()
 	responseEntry.Wrapping = fyne.TextWrapWord
-	reqLabel := widget.NewLabel("Request")
+	reqLabel := widget.NewLabel("Request:")
 	targetInput := widget.NewEntry()
 	targetInput.SetText("127.0.0.1:6001")
 	targetInput.SetPlaceHolder("")
@@ -57,7 +59,6 @@ func main() {
 			}
 
 			maps := parseAdapter.Parse().ServiceInfoMaps()
-			fmt.Println(maps)
 			if serviceAccordionRemove {
 				content.Add(serviceAccordion)
 				serviceAccordionRemove = false
@@ -85,7 +86,7 @@ func main() {
 							return
 						}
 						requestEntry.SetText(json)
-						reqLabel.SetText("Request" + ":" + s)
+						reqLabel.SetText(s)
 
 					}),
 					Open: false,
@@ -123,31 +124,32 @@ func main() {
 	content.Add(serviceAccordion)
 	leftTool := container.New(layout.NewGridLayout(1), content)
 
-	//
-	rightTool := container.NewVBox()
+	// Right
 	form := widget.NewForm(&widget.FormItem{
 		Text:     "Target:",
 		Widget:   targetInput,
 		HintText: "Input target url",
 	})
-	rightTool.Add(form)
-	rightTool.Add(reqLabel)
-	rightTool.Add(requestEntry)
-	rightTool.Add(widget.NewButtonWithIcon("RUN", theme.MediaPlayIcon(), func() {
+
+	requestContainer := container.New(layout.NewGridLayoutWithColumns(1))
+	requestContainer.Add(requestEntry)
+	requestButton := widget.NewButtonWithIcon("RUN", theme.MediaPlayIcon(), func() {
 		if requestEntry.Text == "" {
 			dialog.ShowError(errors.New("request json can not nil"), window)
 			return
 		}
-		processBar.Show()
-		processBar.Start()
-		serviceInfo := strings.Split(reqLabel.Text, ":")[1]
-		methodInfo := strings.Split(serviceInfo, "-")
+		if reqLabel.Text == "" {
+			dialog.ShowError(errors.New("proto can not nil"), window)
+			return
+		}
+		methodInfo := strings.Split(reqLabel.Text, "-")
 		service, method, err := reflect.ParseServiceMethod(methodInfo[0])
 		if err != nil {
 			dialog.ShowError(err, window)
 			return
 		}
-		parse := GetParseAdapter(methodInfo[1]).Parse()
+		index := methodInfo[1]
+		parse := GetParseAdapter(index).Parse()
 		mds, err := parse.MethodDescriptor(service, method)
 		if err != nil {
 			dialog.ShowError(err, window)
@@ -162,6 +164,7 @@ func main() {
 			return
 		}
 		stub := grpcdynamic.NewStub(conn)
+		processBar.Show()
 		rpc, err := parse.InvokeRpc(ctx, stub, mds, requestEntry.Text)
 		if err != nil {
 			processBar.Hide()
@@ -171,14 +174,28 @@ func main() {
 		processBar.Hide()
 		marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
 		responseEntry.SetText(string(marshalIndent))
-	}))
-	rightTool.Add(processBar)
+	})
+	bottomBox := container.NewVBox(canvas.NewLine(color.Black), requestButton)
+	bottomBox.Add(canvas.NewLine(color.Black))
+	bottomBox.Add(processBar)
+	requestPanel := container.NewBorder(form, bottomBox, nil, nil)
+	requestPanel.Add(requestContainer)
 
-	rightTool.Add(widget.NewLabel("Response:"))
-	rightTool.Add(responseEntry)
+	responseContainer := container.New(layout.NewGridLayoutWithColumns(1))
+	responseContainer.Add(responseEntry)
+	responseLabel := widget.NewLabel("Response:")
+	responsePanel := container.NewBorder(responseLabel, nil, nil, nil)
+	responsePanel.Add(responseContainer)
 
+	rightTool := container.NewGridWithColumns(1,
+		requestPanel, responsePanel)
 	split := container.NewHSplit(leftTool, rightTool)
 
 	window.SetContent(split)
 	window.ShowAndRun()
+}
+
+func RequestErr(window fyne.Window, pb *widget.ProgressBarInfinite, err error) {
+	pb.Hide()
+	dialog.ShowError(err, window)
 }

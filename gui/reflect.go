@@ -54,6 +54,8 @@ func RegisterReflect(filename string) (*ParseReflectAdapter, bool, error) {
 
 func ClearReflect() {
 	parseContainerMap = nil
+	containerMap = nil
+	index = 0
 }
 
 func ResetReflect() {
