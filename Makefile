@@ -52,4 +52,4 @@ pkg-win:
 
 pkg-macos:
 	fyne package -os darwin -src gui/ -icon pic/gopher.png -name ${BINARY} -appVersion $(VERSION)
-	tar czvf ${BINARY}-mac-gui-${VERSION}.tar ./${BINARY}.app
+	tar czvf ${BINARY}-mac-gui.tar ./${BINARY}.app
