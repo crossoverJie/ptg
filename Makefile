@@ -3,7 +3,7 @@ BINARY=ptg
 GOBUILD=go build -ldflags "-s -w" -o ${BINARY}
 GOCLEAN=go clean
 RMTARGZ=rm -rf *.gz
-VERSION=0.0.1
+VERSION=0.0.2
 
 # Build
 build:
@@ -40,3 +40,15 @@ release:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD).exe
 	tar czvf ${BINARY}-win64-${VERSION}.tar.gz ./${BINARY}.exe
 	$(GOCLEAN)
+
+
+gen-go-proto:
+	@protoc --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    reflect/gen/user.proto
+
+pkg-win:
+	fyne package -os windows -src gui/ -icon pic/gopher.png -name ${BINARY} -appVersion $(VERSION)
+
+pkg-macos:
+	fyne package -os darwin -src gui/ -icon pic/gopher.png -name ${BINARY} -appVersion $(VERSION)

@@ -1,21 +1,18 @@
-package main
+package client
 
 import (
 	"fmt"
+	"github.com/crossoverJie/ptg/meta"
 	"github.com/docker/go-units"
 	"testing"
 )
 
-func Test_client_Request(t *testing.T) {
-	httpClient := NewClient("GET", "http://gobyexample.com", "")
-	request, err := httpClient.Request()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(request)
-}
-func Test_client_Request2(t *testing.T) {
-	httpClient := NewClient("POST", "http://localhost:8080/post", `{"name":"abc"}`)
+func Test_httpClient_Request(t *testing.T) {
+	meta.NewResult()
+	httpClient := NewClient("GET",
+		"http://gobyexample.com", "",
+		meta.NewMeta("http://gobyexample.com", "GET", "", "", Http, "",
+			"", 1, 1, nil, nil))
 	request, err := httpClient.Request()
 	if err != nil {
 		fmt.Println(err)

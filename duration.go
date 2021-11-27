@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	ptgclient "github.com/crossoverJie/ptg/client"
+	"github.com/crossoverJie/ptg/meta"
+	"github.com/crossoverJie/ptg/model"
 	"github.com/docker/go-units"
 	"github.com/fatih/color"
 	"sync/atomic"
@@ -14,13 +17,17 @@ type DurationModel struct {
 	close        chan struct{}
 	totalRequest int32
 	shutdown     int32
+	result       *meta.Result
+	meta         *meta.Meta
 }
 
-func NewDurationModel(duration int64) Model {
+func NewDurationModel(duration int64) model.Model {
 	return &DurationModel{
 		duration: duration,
 		timeCh:   make(chan struct{}),
 		close:    make(chan struct{}),
+		result:   meta.GetResult(),
+		meta:     meta.GetMeta(),
 	}
 }
 
@@ -52,13 +59,14 @@ func (c *DurationModel) Run() {
 				if atomic.LoadInt32(&c.shutdown) == 1 {
 					return
 				}
-				httpClient := NewClient(method, target, body)
-				response, err := httpClient.Request()
+				ptgClient := ptgclient.NewClient(method, target, body, c.meta)
+				response, err := ptgClient.Request()
 				atomic.AddInt32(&c.totalRequest, 1)
-				respCh <- response
+				c.meta.RespCh() <- response
 				if err != nil {
 					color.Red("request err %v\n", err)
-					atomic.AddInt32(&ErrorCount, 1)
+					//atomic.AddInt32(&ErrorCount, 1)
+					c.result.IncrementErrorCount()
 				}
 			}
 		}()
@@ -74,10 +82,12 @@ func (c *DurationModel) Finish() {
 				atomic.StoreInt32(&c.shutdown, 1)
 				return
 			}
-		case res := <-respCh:
+		case res := <-c.meta.RespCh():
 			if res != nil {
-				totalRequestTime += res.RequestTime
-				totalResponseSize += res.ResponseSize
+				//totalRequestTime += res.RequestTime
+				//totalResponseSize += res.ResponseSize
+				c.result.SetTotalRequestTime(res.RequestTime).
+					SetTotalResponseSize(res.ResponseSize)
 			}
 		}
 	}
@@ -89,9 +99,9 @@ func (c *DurationModel) Shutdown() {
 
 func (c *DurationModel) PrintSate() {
 	fmt.Println("")
-	color.Green("%v requests in %v, %v read.\n", c.totalRequest, units.HumanDuration(totalRequestTime), units.HumanSize(float64(totalResponseSize)))
-	color.Green("Avg Req Time:\t\t%v\n", totalRequestTime/time.Duration(c.totalRequest))
-	color.Green("Fastest Request:\t%v\n", FastRequestTime)
-	color.Green("Slowest Request:\t%v\n", SlowRequestTime)
-	color.Green("Number of Errors:\t%v\n", ErrorCount)
+	color.Green("%v requests in %v, %v read.\n", c.totalRequest, units.HumanDuration(c.result.TotalRequestTime()), units.HumanSize(float64(c.result.TotalResponseSize())))
+	color.Green("Avg Req Time:\t\t%v\n", c.result.TotalRequestTime()/time.Duration(c.totalRequest))
+	color.Green("Fastest Request:\t%v\n", c.result.FastRequestTime())
+	color.Green("Slowest Request:\t%v\n", c.result.SlowRequestTime())
+	color.Green("Number of Errors:\t%v\n", c.result.ErrorCount())
 }

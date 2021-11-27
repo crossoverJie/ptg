@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"github.com/cheggaaa/pb/v3"
+	"github.com/crossoverJie/ptg/meta"
+	"github.com/crossoverJie/ptg/model"
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 	"io/ioutil"
@@ -10,13 +12,12 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"time"
 )
 
 // init bind variable
 var (
-	target       string
-	respCh       chan *Response
+	target string
+	//respCh       chan *meta.Response
 	thread       int
 	duration     int64
 	method       string
@@ -30,35 +31,18 @@ var (
 )
 
 var (
-	totalRequestTime  time.Duration
-	totalResponseSize int
-	SlowRequestTime   time.Duration
-	FastRequestTime   = time.Minute
-	ErrorCount        int32
-	Bar               *pb.ProgressBar
+	//totalRequestTime  time.Duration
+	//totalResponseSize int
+	//SlowRequestTime   time.Duration
+	//FastRequestTime   = time.Minute
+	//ErrorCount        int32
+	Bar *pb.ProgressBar
 )
 
 const (
 	PbTmpl = `{{ green "Requesting:" }} {{string . "target" | blue}}  {{ bar . "<" "-" (cycle . "↖" "↗" "↘" "↙" ) "." ">"}} {{speed . | rndcolor }} {{percent .}}`
 	Http   = "http"
 	Grpc   = "grpc"
-)
-
-type (
-	Model interface {
-		Init()
-		Run()
-		Finish()
-		PrintSate()
-		Shutdown()
-	}
-
-	Job struct {
-		thread   int
-		duration int64
-		count    int
-		target   string
-	}
 )
 
 func main() {
@@ -176,21 +160,24 @@ func main() {
 					headerMap[splitN[0]] = splitN[1]
 				}
 			}
-			// ##########App init##########
-
-			var model Model
+			meta.NewResult()
+			newMeta := meta.NewMeta(target, method, bodyPath, body, protocol, protocolFile, fqn, thread, duration, &headerSlice, headerMap)
+			var model model.Model
 			if count > 0 {
-				respCh = make(chan *Response, count)
+				respCh := make(chan *meta.Response, count)
+				newMeta.SetRespCh(respCh)
 				model = NewCountModel(count)
 				Bar = pb.ProgressBarTemplate(PbTmpl).Start(count)
 			} else {
 				// 防止写入 goroutine 阻塞，导致泄露。
-				respCh = make(chan *Response, 3*thread)
+				respCh := make(chan *meta.Response, 3*thread)
+				newMeta.SetRespCh(respCh)
 				model = NewDurationModel(duration)
 				Bar = pb.ProgressBarTemplate(PbTmpl).Start(int(duration))
 			}
 			Bar.Set("target", target).
 				SetWidth(120)
+			// ##########App init##########
 
 			// shutdown
 			signCh := make(chan os.Signal, 1)
