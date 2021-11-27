@@ -5,6 +5,7 @@ Performance testing tool (Go)
 
 # Building
 
+## cli app
 ```go
 go get github.com/crossoverJie/ptg
 ```
@@ -12,6 +13,9 @@ go get github.com/crossoverJie/ptg
 ```shell script
 wget https://github.com/crossoverJie/ptg/releases/download/${version}/ptg-${os}-${version}.tar.gz
 ```
+
+## GUI app
+
 
 # Usage
 
@@ -72,3 +76,9 @@ Fastest Request:        111.563179ms
 Slowest Request:        128.587886ms
 Number of Errors:       0
 ```
+
+
+# TODO
+
+[x] cli support.
+[x] GUI support.
