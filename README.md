@@ -1,7 +1,10 @@
 # ptg
-Performance testing tool (Go)
+Performance testing tool (Go), It is also a **GUI** `gRPC` client.
+
+Test the `gRPC` service like `postman`
 
 ![](pic/show.gif)
+![](pic/ptg.gif)
 
 # Building
 
@@ -82,3 +85,5 @@ Number of Errors:       0
 
 - [x] cli support.
 - [x] GUI support.
+- [ ] metadata support.
+- [ ] benchmark GUI.
