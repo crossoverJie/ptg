@@ -6,7 +6,7 @@ Test the `gRPC` service like `postman`.
 ![](pic/show.gif)
 ![](pic/ptg.gif)
 
-# Building
+# Install
 
 ## cli app
 ```go
@@ -18,6 +18,18 @@ wget https://github.com/crossoverJie/ptg/releases/download/${version}/ptg-${os}-
 ```
 
 ## GUI app
+
+To download the installer, go to the [Releases Page](https://github.com/crossoverJie/ptg/releases).
+
+## Build from source
+
+```shell
+git clone git@github.com:crossoverJie/ptg.git
+cd ptg
+make release
+make pkg-win
+make pkg-macos
+```
 
 
 # Usage
