@@ -1,6 +1,7 @@
 package io
 
 import (
+	"github.com/golang/protobuf/proto"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -42,6 +43,16 @@ func LoadLog() ([]byte, error) {
 		return nil, err
 	}
 	return ioutil.ReadFile(filename)
+}
+
+func LoadLogWithStruct() (*Log, error) {
+	bytes, err := LoadLog()
+	var read Log
+	err = proto.Unmarshal(bytes, &read)
+	if err != nil {
+		return nil, err
+	}
+	return &read, nil
 }
 
 func exist(filename string) bool {

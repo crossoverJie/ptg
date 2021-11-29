@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"image/color"
+	gio "io"
 	"net/url"
 	"strings"
 )
@@ -48,7 +49,7 @@ func main() {
 	serviceAccordion := widget.NewAccordion()
 
 	content := container.NewVBox()
-	fileOpen := dialog.NewFileOpen(func(uri fyne.URIReadCloser, err error) {
+	newProto := func(uri fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, window)
 			return
@@ -102,7 +103,8 @@ func main() {
 			})
 		}
 
-	}, window)
+	}
+	fileOpen := dialog.NewFileOpen(newProto, window)
 
 	toolbar := widget.NewToolbar(
 		widget.NewToolbarAction(theme.ContentAddIcon(), func() {
@@ -213,7 +215,27 @@ func main() {
 
 	window.SetContent(split)
 	app.Lifecycle().SetOnStarted(func() {
-
+		log, err := io.LoadLogWithStruct()
+		if err != nil {
+			dialog.ShowError(err, window)
+		}
+		for _, filename := range log.Filenames {
+			newProto(&ResetUri{
+				Filename: filename,
+			}, nil)
+		}
+		if log.Target != "" {
+			targetInput.SetText(log.Target)
+		}
+		if log.Request != "" {
+			requestEntry.SetText(log.Request)
+		}
+		if log.Response != "" {
+			responseEntry.SetText(log.Response)
+		}
+		if log.Metadata != "" {
+			metadataEntry.SetText(log.Metadata)
+		}
 	})
 	app.Lifecycle().SetOnStopped(func() {
 		var filenames []string
@@ -256,4 +278,53 @@ func SaveLog(filenames []string, target, request, response, metadata string) err
 		return err
 	}
 	return io.SaveLog(marshal)
+}
+
+type ResetUri struct {
+	gio.ReadCloser
+	Filename string
+}
+
+func (r *ResetUri) URI() fyne.URI {
+	return &uri{path: r.Filename}
+}
+
+type uri struct {
+	path string
+}
+
+func (u *uri) Extension() string {
+	return ""
+}
+
+func (u *uri) Name() string {
+	return ""
+}
+
+func (u *uri) MimeType() string {
+	return ""
+}
+
+func (u *uri) Scheme() string {
+	return ""
+}
+
+func (u *uri) String() string {
+	return ""
+}
+
+func (u *uri) Authority() string {
+	return ""
+}
+
+func (u *uri) Path() string {
+	return u.path
+}
+
+func (u *uri) Query() string {
+	return ""
+}
+
+func (u *uri) Fragment() string {
+	return ""
 }

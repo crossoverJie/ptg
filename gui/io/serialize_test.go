@@ -37,3 +37,11 @@ func TestLoadLog(t *testing.T) {
 	}
 	fmt.Println(read)
 }
+
+func TestLoadLogWithStruct(t *testing.T) {
+	withStruct, err := LoadLogWithStruct()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(withStruct)
+}
