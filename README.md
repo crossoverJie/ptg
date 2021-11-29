@@ -97,7 +97,7 @@ Number of Errors:       0
 
 - [x] cli support.
 - [x] GUI support.
-- [ ] metadata support.
-- [ ] stream call.
+- [x] metadata support.
 - [ ] Data persistence.
+- [ ] stream call.
 - [ ] benchmark GUI.

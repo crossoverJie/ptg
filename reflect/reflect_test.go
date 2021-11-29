@@ -8,7 +8,9 @@ import (
 	"github.com/crossoverJie/ptg/reflect/gen/user"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"log"
 	"net"
 	"strings"
@@ -45,6 +47,12 @@ func TestRequestJSON(t *testing.T) {
 
 func TestParseReflect_InvokeRpc(t *testing.T) {
 	data := `{"order_id":20,"user_id":[20],"remark":"Hello","reason_id":[10]}`
+	metaStr := `{"lang":"zh"}`
+	var m map[string]string
+	err := json.Unmarshal([]byte(metaStr), &m)
+	if err != nil {
+		panic(err)
+	}
 	filename := "gen/test.proto"
 	parse, err := NewParse(filename)
 	if err != nil {
@@ -60,9 +68,15 @@ func TestParseReflect_InvokeRpc(t *testing.T) {
 	}
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.DialContext(context.Background(), "127.0.0.1:5000", opts...)
+	conn, err := grpc.DialContext(context.Background(), "127.0.0.1:6001", opts...)
 	stub := grpcdynamic.NewStub(conn)
-	rpc, err := parse.InvokeRpc(context.Background(), stub, mds, data)
+
+	// metadata
+	// create a new context with some metadata
+	//md := metadata.Pairs("name", "v1", "k1", "v2", "k2", "v3")
+	md := metadata.New(m)
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+	rpc, err := parse.InvokeRpc(ctx, stub, mds, data)
 	if err != nil {
 		panic(err)
 	}
@@ -82,7 +96,7 @@ func TestServer(t *testing.T) {
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	v1.RegisterOrderServiceServer(grpcServer, &Order{})
-	reflection.Register(grpcServer)
+	//reflection.Register(grpcServer)
 
 	fmt.Println("gRPC server started at ", port)
 	if err := grpcServer.Serve(lis); err != nil {
@@ -95,6 +109,16 @@ type Order struct {
 }
 
 func (o *Order) Create(ctx context.Context, in *v1.OrderApiCreate) (*v1.Order, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.DataLoss, "failed to get metadata")
+	}
+	if t, ok := md["lang"]; ok {
+		fmt.Printf("name from metadata:\n")
+		for i, e := range t {
+			fmt.Printf(" %d. %s\n", i, e)
+		}
+	}
 
 	time.Sleep(200 * time.Millisecond)
 	fmt.Println(in.OrderId)

@@ -17,6 +17,7 @@ import (
 	_ "github.com/crossoverJie/ptg/reflect"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"image/color"
 	"net/url"
 	"strings"
@@ -37,6 +38,8 @@ func main() {
 	targetInput := widget.NewEntry()
 	targetInput.SetText(ptgApp.RightRequest.TargetInputText)
 	targetInput.SetPlaceHolder("")
+	metadataEntry := widget.NewMultiLineEntry()
+	metadataEntry.SetPlaceHolder(ptgApp.RightRequest.MetaDataInputPlaceHolder)
 	processBar := widget.NewProgressBarInfinite()
 	processBar.Hide()
 	serviceAccordionRemove := false
@@ -159,6 +162,12 @@ func main() {
 		var opts []grpc.DialOption
 		opts = append(opts, grpc.WithInsecure())
 		ctx := context.Background()
+		ctx, err = buildWithMetadata(ctx, metadataEntry.Text)
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+
 		conn, err := grpc.DialContext(ctx, targetInput.Text, opts...)
 		if err != nil {
 			dialog.ShowError(err, window)
@@ -176,7 +185,13 @@ func main() {
 		marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
 		responseEntry.SetText(string(marshalIndent))
 	})
-	bottomBox := container.NewVBox(canvas.NewLine(color.Black), requestButton)
+	bottomBox := container.NewVBox(widget.NewAccordion(&widget.AccordionItem{
+		Title:  ptgApp.RightRequest.MetaDataAccordionTitle,
+		Detail: metadataEntry,
+		Open:   false,
+	}))
+	bottomBox.Add(canvas.NewLine(color.Black))
+	bottomBox.Add(requestButton)
 	bottomBox.Add(canvas.NewLine(color.Black))
 	bottomBox.Add(processBar)
 	requestPanel := container.NewBorder(form, bottomBox, nil, nil)
@@ -194,4 +209,19 @@ func main() {
 
 	window.SetContent(split)
 	window.ShowAndRun()
+}
+
+func buildWithMetadata(ctx context.Context, meta string) (context.Context, error) {
+	if strings.Trim(meta, "") != "" {
+		var m map[string]string
+		err := json.Unmarshal([]byte(meta), &m)
+		if err != nil {
+			return nil, err
+		}
+		md := metadata.New(m)
+		ctx := metadata.NewOutgoingContext(ctx, md)
+		return ctx, nil
+	}
+	return ctx, nil
+
 }
