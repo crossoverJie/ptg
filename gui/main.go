@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"image/color"
+	"log"
 	"net/url"
 	"strings"
 )
@@ -130,9 +131,9 @@ func main() {
 
 	// Right
 	form := widget.NewForm(&widget.FormItem{
-		Text:     "Target:",
+		Text:     ptgApp.RightRequest.TargetFormText,
 		Widget:   targetInput,
-		HintText: "Input target url",
+		HintText: ptgApp.RightRequest.TargetFormHintText,
 	})
 
 	requestContainer := container.New(layout.NewGridLayoutWithColumns(1))
@@ -208,6 +209,12 @@ func main() {
 	split := container.NewHSplit(leftTool, rightTool)
 
 	window.SetContent(split)
+	app.Lifecycle().SetOnStarted(func() {
+		log.Println("Lifecycle: Started")
+	})
+	app.Lifecycle().SetOnStopped(func() {
+		log.Println("Lifecycle: Stopped")
+	})
 	window.ShowAndRun()
 }
 

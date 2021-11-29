@@ -34,10 +34,6 @@ func TestRequestJSON(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	if err != nil {
-		panic(err)
-	}
-
 	json, err := parse.RequestJSON("order.v1.OrderService", "Create")
 	if err != nil {
 		panic(err)
@@ -55,9 +51,6 @@ func TestParseReflect_InvokeRpc(t *testing.T) {
 	}
 	filename := "gen/test.proto"
 	parse, err := NewParse(filename)
-	if err != nil {
-		panic(err)
-	}
 	if err != nil {
 		panic(err)
 	}
@@ -113,12 +106,7 @@ func (o *Order) Create(ctx context.Context, in *v1.OrderApiCreate) (*v1.Order, e
 	if !ok {
 		return nil, status.Errorf(codes.DataLoss, "failed to get metadata")
 	}
-	if t, ok := md["lang"]; ok {
-		fmt.Printf("name from metadata:\n")
-		for i, e := range t {
-			fmt.Printf(" %d. %s\n", i, e)
-		}
-	}
+	fmt.Println(md)
 
 	time.Sleep(200 * time.Millisecond)
 	fmt.Println(in.OrderId)

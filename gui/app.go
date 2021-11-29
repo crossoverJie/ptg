@@ -5,6 +5,8 @@ const (
 	AppWeight                = 1000
 	AppHeight                = 500
 	HelpUrl                  = "https://github.com/crossoverJie/ptg"
+	TargetFormText           = "Target:"
+	TargetFormHintText       = "Input target url"
 	RequestEntryPlaceHolder  = "Input request json"
 	MetaDataAccordion        = "metadata"
 	MetaDataInputPlaceHolder = "Input metadata json"
@@ -22,6 +24,7 @@ type App struct {
 }
 
 type RightRequest struct {
+	TargetFormText, TargetFormHintText               string
 	RequestEntryPlaceHolder, TargetInputText         string
 	MetaDataAccordionTitle, MetaDataInputPlaceHolder string
 	RequestButtonText                                string
@@ -38,6 +41,8 @@ func InitApp() *App {
 		AppHeight: AppHeight,
 		HelpUrl:   HelpUrl,
 		RightRequest: &RightRequest{
+			TargetFormText:           TargetFormText,
+			TargetFormHintText:       TargetFormHintText,
 			RequestEntryPlaceHolder:  RequestEntryPlaceHolder,
 			TargetInputText:          TargetInputText,
 			MetaDataAccordionTitle:   MetaDataAccordion,

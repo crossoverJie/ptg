@@ -4,7 +4,7 @@ Performance testing tool (Go), It is also a **GUI** `gRPC` client.
 Test the `gRPC` service like `postman`.
 
 ![](pic/show.gif)
-![](pic/ptg.gif)
+![](pic/ptg-min.gif)
 
 # Install
 
