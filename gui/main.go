@@ -13,13 +13,14 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/crossoverJie/ptg/gui/io"
 	"github.com/crossoverJie/ptg/reflect"
 	_ "github.com/crossoverJie/ptg/reflect"
+	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"image/color"
-	"log"
 	"net/url"
 	"strings"
 )
@@ -52,53 +53,55 @@ func main() {
 			dialog.ShowError(err, window)
 			return
 		}
-		if uri != nil {
-			parseAdapter, exit, err := RegisterReflect(uri.URI().Path())
-			if err != nil {
-				dialog.ShowError(err, window)
-				return
-			}
-			if exit {
-				dialog.ShowError(errors.New("proto file already exists"), window)
-				return
-			}
-
-			maps := parseAdapter.Parse().ServiceInfoMaps()
-			if serviceAccordionRemove {
-				content.Add(serviceAccordion)
-				serviceAccordionRemove = false
-			}
-			for k, v := range maps {
-				var methods []string
-				for _, s := range v {
-					methods = append(methods, k+"."+s+"-"+fmt.Sprint(parseAdapter.Index()))
-				}
-				serviceAccordion.Append(&widget.AccordionItem{
-					Title: k,
-					Detail: widget.NewRadioGroup(methods, func(s string) {
-						if s == "" {
-							return
-						}
-						methodInfo := strings.Split(s, "-")
-						service, method, err := reflect.ParseServiceMethod(methodInfo[0])
-						if err != nil {
-							dialog.ShowError(err, window)
-							return
-						}
-						json, err := GetParseAdapter(methodInfo[1]).Parse().RequestJSON(service, method)
-						if err != nil {
-							dialog.ShowError(err, window)
-							return
-						}
-						requestEntry.SetText(json)
-						reqLabel.SetText(s)
-
-					}),
-					Open: false,
-				})
-
-			}
+		if uri == nil {
+			return
 		}
+
+		parseAdapter, exit, err := RegisterReflect(uri.URI().Path())
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+		if exit {
+			dialog.ShowError(errors.New("proto file already exists"), window)
+			return
+		}
+
+		maps := parseAdapter.Parse().ServiceInfoMaps()
+		if serviceAccordionRemove {
+			content.Add(serviceAccordion)
+			serviceAccordionRemove = false
+		}
+		for k, v := range maps {
+			var methods []string
+			for _, s := range v {
+				methods = append(methods, k+"."+s+"-"+fmt.Sprint(parseAdapter.Index()))
+			}
+			serviceAccordion.Append(&widget.AccordionItem{
+				Title: k,
+				Detail: widget.NewRadioGroup(methods, func(s string) {
+					if s == "" {
+						return
+					}
+					methodInfo := strings.Split(s, "-")
+					service, method, err := reflect.ParseServiceMethod(methodInfo[0])
+					if err != nil {
+						dialog.ShowError(err, window)
+						return
+					}
+					json, err := GetParseAdapter(methodInfo[1]).Parse().RequestJSON(service, method)
+					if err != nil {
+						dialog.ShowError(err, window)
+						return
+					}
+					requestEntry.SetText(json)
+					reqLabel.SetText(s)
+
+				}),
+				Open: false,
+			})
+		}
+
 	}, window)
 
 	toolbar := widget.NewToolbar(
@@ -210,10 +213,17 @@ func main() {
 
 	window.SetContent(split)
 	app.Lifecycle().SetOnStarted(func() {
-		log.Println("Lifecycle: Started")
+
 	})
 	app.Lifecycle().SetOnStopped(func() {
-		log.Println("Lifecycle: Stopped")
+		var filenames []string
+		for filename, _ := range ParseContainer() {
+			filenames = append(filenames, filename)
+		}
+		err := SaveLog(filenames, targetInput.Text, requestEntry.Text, responseEntry.Text, metadataEntry.Text)
+		if err != nil {
+			dialog.ShowError(err, window)
+		}
 	})
 	window.ShowAndRun()
 }
@@ -231,4 +241,19 @@ func buildWithMetadata(ctx context.Context, meta string) (context.Context, error
 	}
 	return ctx, nil
 
+}
+
+func SaveLog(filenames []string, target, request, response, metadata string) error {
+	log := io.Log{
+		Filenames: filenames,
+		Target:    target,
+		Request:   request,
+		Metadata:  metadata,
+		Response:  response,
+	}
+	marshal, err := proto.Marshal(&log)
+	if err != nil {
+		return err
+	}
+	return io.SaveLog(marshal)
 }

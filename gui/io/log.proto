@@ -1,0 +1,12 @@
+syntax = "proto3";
+option go_package = "github.com/crossoverJie/ptg/gui/io";
+
+package io;
+
+message Log{
+  repeated string filenames = 1;
+  string target = 2;
+  string request = 3;
+  string metadata = 4;
+  string response = 5;
+}
