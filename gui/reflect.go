@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	// filename->*ParseReflectAdapter
 	parseContainerMap map[string]*ParseReflectAdapter
 	// index->filename
 	containerMap map[string]string

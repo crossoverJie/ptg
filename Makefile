@@ -3,7 +3,7 @@ BINARY=ptg
 GOBUILD=go build -ldflags "-s -w" -o ${BINARY}
 GOCLEAN=go clean
 RMTARGZ=rm -rf *.gz
-VERSION=0.0.2
+VERSION=1.0.1
 
 # Build
 build:
@@ -46,6 +46,11 @@ gen-go-proto:
 	@protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     reflect/gen/user.proto
+
+gen-log-proto:
+	@protoc --go_out=. --go_opt=paths=source_relative \
+        --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+        gui/io/log.proto
 
 pkg-win:
 	fyne package -os windows -src gui/ -icon pic/gopher.png -name ${BINARY} -appVersion $(VERSION)

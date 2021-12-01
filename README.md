@@ -4,11 +4,20 @@ Performance testing tool (Go), It is also a **GUI** `gRPC` client.
 Test the `gRPC` service like `postman`.
 
 ![](pic/show.gif)
-![](pic/ptg.gif)
+![](pic/ptg-min.gif)
+
+
+# Features
+- [x] Cli performance test support.
+- [x] GUI support.
+- [x] Metadata support.
+- [x] Data persistence.
+- [ ] Stream call.
+- [ ] Benchmark GUI.
 
 # Install
 
-## cli app
+## Cli app
 ```go
 go get github.com/crossoverJie/ptg
 ```
@@ -93,11 +102,3 @@ Number of Errors:       0
 ```
 
 
-# TODO
-
-- [x] cli support.
-- [x] GUI support.
-- [ ] metadata support.
-- [ ] stream call.
-- [ ] Data persistence.
-- [ ] benchmark GUI.

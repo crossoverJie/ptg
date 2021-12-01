@@ -80,6 +80,7 @@ func (p *ParseReflect) MethodDescriptor(serviceName, methodName string) (*desc.M
 	return sds.FindMethodByName(methodName), nil
 }
 
+// make unary RPC
 func (p *ParseReflect) InvokeRpc(ctx context.Context, stub grpcdynamic.Stub, mds *desc.MethodDescriptor, data string, opts ...grpc.CallOption) (proto.Message, error) {
 
 	messages, err := createPayloadsFromJSON(mds, data)
