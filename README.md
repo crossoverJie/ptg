@@ -6,6 +6,15 @@ Test the `gRPC` service like `postman`.
 ![](pic/show.gif)
 ![](pic/ptg-min.gif)
 
+
+# Features
+- [x] cli support.
+- [x] GUI support.
+- [x] metadata support.
+- [x] Data persistence.
+- [ ] stream call.
+- [ ] benchmark GUI.
+
 # Install
 
 ## cli app
@@ -93,11 +102,3 @@ Number of Errors:       0
 ```
 
 
-# TODO
-
-- [x] cli support.
-- [x] GUI support.
-- [x] metadata support.
-- [ ] Data persistence.
-- [ ] stream call.
-- [ ] benchmark GUI.
