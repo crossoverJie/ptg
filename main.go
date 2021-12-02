@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 )
 
@@ -133,6 +134,7 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			color.White("thread: %v, duration: %v, count %v", thread, duration, count)
+			runtime.GOMAXPROCS(runtime.NumCPU() + thread)
 			// ##########App init##########
 			if count == 0 && duration == 0 {
 				return errors.New("request count and duration must choose one")

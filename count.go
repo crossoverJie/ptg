@@ -14,7 +14,7 @@ import (
 type CountModel struct {
 	wait   sync.WaitGroup
 	count  int
-	workCh chan *model.Job
+	workCh chan struct{}
 	start  time.Time
 	result *meta.Result
 	meta   *meta.Meta
@@ -26,28 +26,23 @@ func NewCountModel(count int) model.Model {
 
 func (c *CountModel) Init() {
 	c.wait.Add(c.count)
-	c.workCh = make(chan *model.Job, c.count)
+	c.workCh = make(chan struct{}, c.count)
 	for i := 0; i < c.count; i++ {
 		go func() {
-			c.workCh <- &model.Job{
-				Thread:   thread,
-				Duration: duration,
-				Count:    c.count,
-				Target:   target,
-			}
+			c.workCh <- struct{}{}
 		}()
 	}
 }
 func (c *CountModel) Run() {
 	for i := 0; i < thread; i++ {
+		httpClient := ptgclient.NewClient(method, target, body, c.meta)
 		go func() {
 			for {
 				select {
-				case job, ok := <-c.workCh:
+				case _, ok := <-c.workCh:
 					if !ok {
 						return
 					}
-					httpClient := ptgclient.NewClient(method, job.Target, body, c.meta)
 					response, err := httpClient.Request()
 					c.meta.RespCh() <- response
 					if err != nil {
@@ -87,6 +82,7 @@ func (c *CountModel) Shutdown() {
 
 func (c *CountModel) PrintSate() {
 	color.Green("%v requests in %v, %v read, and cost %v.\n", c.count, units.HumanDuration(c.result.TotalRequestTime()), units.HumanSize(float64(c.result.TotalResponseSize())), units.HumanDuration(time.Since(c.start)))
+	color.Green("Requests/sec:\t\t%.2f\n", float64(c.count)/time.Since(c.start).Seconds())
 	color.Green("Avg Req Time:\t\t%v\n", c.result.TotalRequestTime()/time.Duration(c.count))
 	color.Green("Fastest Request:\t%v\n", c.result.FastRequestTime())
 	color.Green("Slowest Request:\t%v\n", c.result.SlowRequestTime())

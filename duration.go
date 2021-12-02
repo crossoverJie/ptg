@@ -54,12 +54,12 @@ func (c *DurationModel) Init() {
 }
 func (c *DurationModel) Run() {
 	for i := 0; i < thread; i++ {
+		ptgClient := ptgclient.NewClient(method, target, body, c.meta)
 		go func() {
 			for {
 				if atomic.LoadInt32(&c.shutdown) == 1 {
 					return
 				}
-				ptgClient := ptgclient.NewClient(method, target, body, c.meta)
 				response, err := ptgClient.Request()
 				atomic.AddInt32(&c.totalRequest, 1)
 				c.meta.RespCh() <- response
@@ -100,6 +100,7 @@ func (c *DurationModel) Shutdown() {
 func (c *DurationModel) PrintSate() {
 	fmt.Println("")
 	color.Green("%v requests in %v, %v read.\n", c.totalRequest, units.HumanDuration(c.result.TotalRequestTime()), units.HumanSize(float64(c.result.TotalResponseSize())))
+	color.Green("Requests/sec:\t\t%.2f\n", float64(c.totalRequest)/float64(duration))
 	color.Green("Avg Req Time:\t\t%v\n", c.result.TotalRequestTime()/time.Duration(c.totalRequest))
 	color.Green("Fastest Request:\t%v\n", c.result.FastRequestTime())
 	color.Green("Slowest Request:\t%v\n", c.result.SlowRequestTime())
