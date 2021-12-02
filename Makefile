@@ -3,7 +3,7 @@ BINARY=ptg
 GOBUILD=go build -ldflags "-s -w" -o ${BINARY}
 GOCLEAN=go clean
 RMTARGZ=rm -rf *.gz
-VERSION=1.0.1
+VERSION=1.0.2
 
 # Build
 build:
