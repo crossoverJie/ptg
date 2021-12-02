@@ -64,8 +64,6 @@ func (c *CountModel) Finish() {
 		select {
 		case res := <-c.meta.RespCh():
 			if res != nil {
-				//totalRequestTime += res.RequestTime
-				//totalResponseSize += res.ResponseSize
 				meta.GetResult().SetTotalRequestTime(res.RequestTime).
 					SetTotalResponseSize(res.ResponseSize)
 			}

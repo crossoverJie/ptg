@@ -65,7 +65,6 @@ func (c *DurationModel) Run() {
 				c.meta.RespCh() <- response
 				if err != nil {
 					color.Red("request err %v\n", err)
-					//atomic.AddInt32(&ErrorCount, 1)
 					c.result.IncrementErrorCount()
 				}
 			}
@@ -84,8 +83,6 @@ func (c *DurationModel) Finish() {
 			}
 		case res := <-c.meta.RespCh():
 			if res != nil {
-				//totalRequestTime += res.RequestTime
-				//totalResponseSize += res.ResponseSize
 				c.result.SetTotalRequestTime(res.RequestTime).
 					SetTotalResponseSize(res.ResponseSize)
 			}

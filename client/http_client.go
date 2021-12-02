@@ -47,8 +47,6 @@ func (c *httpClient) Request() (*meta.Response, error) {
 	r := &meta.Response{
 		RequestTime: time.Since(start),
 	}
-	//SlowRequestTime = r.slowRequest()
-	//FastRequestTime = r.fastRequest()
 	meta.GetResult().SetSlowRequestTime(r.SlowRequest()).
 		SetFastRequestTime(r.FastRequest())
 	if err != nil {
