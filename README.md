@@ -17,7 +17,7 @@ Test the `gRPC` service like `postman`.
 
 # Install
 
-## Cli app
+## CLI app
 ```go
 go get github.com/crossoverJie/ptg
 ```
