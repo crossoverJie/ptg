@@ -66,16 +66,7 @@ func (h *History) viewHistory() {
 			for _, v := range h.lruCache.List() {
 				//index := i
 				historyValue := v.(*HistoryValue)
-				button := widget.NewButtonWithIcon(historyValue.MethodInfo, theme.HistoryIcon(), func() {
-					fmt.Println("Tapped", historyValue.Id)
-					h.lruCache.Get(historyValue.Id)
-					h.targetInput.SetText(historyValue.Value.Target)
-					h.requestEntry.SetText(historyValue.Value.Request)
-					h.metadataEntry.SetText(historyValue.Value.Metadata)
-					h.responseEntry.SetText(historyValue.Value.Response)
-				})
-				h.historyButton.Add(button)
-				h.alreadyButtonList = append(h.alreadyButtonList, button)
+				h.drawHistoryButton(historyValue)
 			}
 		}
 	}
@@ -127,18 +118,22 @@ func (h *History) ViewSearch() {
 			h.alreadyButtonList = make([]*widget.Button, 0)
 			for _, v := range searchList {
 				historyValue := v
-				button := widget.NewButtonWithIcon(historyValue.MethodInfo, theme.HistoryIcon(), func() {
-					fmt.Println("Search tapped", historyValue.Id)
-					h.lruCache.Get(historyValue.Id)
-					h.targetInput.SetText(historyValue.Value.Target)
-					h.requestEntry.SetText(historyValue.Value.Request)
-					h.metadataEntry.SetText(historyValue.Value.Metadata)
-					h.responseEntry.SetText(historyValue.Value.Response)
-				})
-				h.historyButton.Add(button)
-				h.alreadyButtonList = append(h.alreadyButtonList, button)
+				h.drawHistoryButton(historyValue)
 			}
 		}
 	}
 
+}
+
+func (h *History) drawHistoryButton(historyValue *HistoryValue) {
+	button := widget.NewButtonWithIcon(historyValue.MethodInfo, theme.HistoryIcon(), func() {
+		fmt.Println("Search tapped", historyValue.Id)
+		h.lruCache.Get(historyValue.Id)
+		h.targetInput.SetText(historyValue.Value.Target)
+		h.requestEntry.SetText(historyValue.Value.Request)
+		h.metadataEntry.SetText(historyValue.Value.Metadata)
+		h.responseEntry.SetText(historyValue.Value.Response)
+	})
+	h.historyButton.Add(button)
+	h.alreadyButtonList = append(h.alreadyButtonList, button)
 }
