@@ -12,6 +12,7 @@ Test the `gRPC` service like `postman`.
 - [x] GUI support.
 - [x] Metadata support.
 - [x] Data persistence.
+- [x] Search history.
 - [ ] Stream call.
 - [ ] Benchmark GUI.
 

@@ -47,6 +47,11 @@ func main() {
 	processBar.Hide()
 	serviceAccordionRemove := false
 	serviceAccordion := widget.NewAccordion()
+	searchAccordion := widget.NewAccordion()
+	searchEntry := widget.NewEntry()
+	historyButton := container.NewVBox()
+	history := NewHistory(3, historyButton, targetInput, requestEntry, metadataEntry, responseEntry)
+	historyId := 0
 
 	content := container.NewVBox()
 	newProto := func(uri fyne.URIReadCloser, err error) {
@@ -118,7 +123,7 @@ func main() {
 			content.Remove(serviceAccordion)
 			serviceAccordionRemove = true
 			serviceAccordion.Items = nil
-			dialog.ShowInformation("Notice", "all proto files have been reset", window)
+			dialog.ShowInformation("Notice", "All proto files have been reset", window)
 		}),
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarAction(theme.HelpIcon(), func() {
@@ -131,8 +136,22 @@ func main() {
 		}),
 	)
 	content.Add(toolbar)
+	content.Add(searchAccordion)
 	content.Add(serviceAccordion)
-	leftTool := container.New(layout.NewGridLayout(1), content)
+
+	searchEntry.SetPlaceHolder(ptgApp.SearchFormPlaceHolder)
+	searchForm := widget.NewForm(&widget.FormItem{
+		Widget:   searchEntry,
+		HintText: ptgApp.SearchFormText,
+	}, &widget.FormItem{
+		Widget: widget.NewButtonWithIcon(ptgApp.SearchFormText, theme.SearchIcon(), func() {
+
+		}),
+	})
+
+	searchList := container.NewVScroll(historyButton)
+	searchAccordion.Append(widget.NewAccordionItem(ptgApp.SearchFormText, searchForm))
+	leftTool := container.New(layout.NewGridLayout(1), content, searchList)
 
 	// Right
 	form := widget.NewForm(&widget.FormItem{
@@ -190,6 +209,18 @@ func main() {
 		processBar.Hide()
 		marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
 		responseEntry.SetText(string(marshalIndent))
+		historyId++
+		history.Put(historyId, &HistoryValue{
+			Id: historyId,
+			Value: &io.Log{
+				Target:   targetInput.Text,
+				Request:  requestEntry.Text,
+				Metadata: metadataEntry.Text,
+				Response: string(marshalIndent),
+			},
+			MethodInfo: methodInfo[0]},
+		)
+
 	})
 	bottomBox := container.NewVBox(widget.NewAccordion(&widget.AccordionItem{
 		Title:  ptgApp.RightRequest.MetaDataAccordionTitle,

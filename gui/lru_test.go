@@ -38,13 +38,13 @@ func TestLruCache_Put(t *testing.T) {
 }
 func TestLruCache_Put2(t *testing.T) {
 	l := NewLruList(3)
-	l.Put(1, 1)
-	l.Put(2, 2)
-	l.Put(3, 3)
+	l.Put(1, 11)
+	l.Put(2, 22)
+	l.Put(3, 33)
 	i := l.List()
 	fmt.Println(i)
 	fmt.Println("=====")
-	l.Put(4, 4)
+	l.Put(4, 44)
 	i = l.List()
 	fmt.Println(i)
 	fmt.Println("=====")
