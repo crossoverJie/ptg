@@ -50,7 +50,7 @@ func main() {
 	searchAccordion := widget.NewAccordion()
 	searchEntry := widget.NewEntry()
 	historyButton := container.NewVBox()
-	history := NewHistory(3, historyButton, targetInput, requestEntry, metadataEntry, responseEntry)
+	history := NewHistory(10, historyButton, targetInput, requestEntry, metadataEntry, responseEntry)
 	historyId := 0
 
 	content := container.NewVBox()
@@ -139,13 +139,14 @@ func main() {
 	content.Add(searchAccordion)
 	content.Add(serviceAccordion)
 
+	// Search
 	searchEntry.SetPlaceHolder(ptgApp.SearchFormPlaceHolder)
 	searchForm := widget.NewForm(&widget.FormItem{
 		Widget:   searchEntry,
 		HintText: ptgApp.SearchFormText,
 	}, &widget.FormItem{
 		Widget: widget.NewButtonWithIcon(ptgApp.SearchFormText, theme.SearchIcon(), func() {
-
+			history.SearchResult(strings.ToLower(searchEntry.Text))
 		}),
 	})
 
@@ -209,6 +210,8 @@ func main() {
 		processBar.Hide()
 		marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
 		responseEntry.SetText(string(marshalIndent))
+
+		// Write history
 		historyId++
 		history.Put(historyId, &HistoryValue{
 			Id: historyId,

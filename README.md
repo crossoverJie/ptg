@@ -8,7 +8,7 @@ Test the `gRPC` service like `postman`.
 
 
 # Features
-- [x] Cli performance test support.
+- [x] CLI performance test support.
 - [x] GUI support.
 - [x] Metadata support.
 - [x] Data persistence.

@@ -5,7 +5,7 @@ const (
 	AppWeight                = 1000
 	AppHeight                = 800
 	HelpUrl                  = "https://github.com/crossoverJie/ptg"
-	SearchFormText           = "Search"
+	SearchFormText           = "SearchResult"
 	SearchFormPlaceHolder    = "keyword"
 	TargetFormText           = "Target:"
 	TargetFormHintText       = "Input target url"
