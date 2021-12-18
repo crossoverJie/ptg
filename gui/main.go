@@ -252,6 +252,7 @@ func main() {
 		log, err := io.LoadLogWithStruct()
 		if err != nil {
 			dialog.ShowError(err, window)
+			return
 		}
 		for _, filename := range log.Filenames {
 			newProto(&ResetUri{
@@ -270,6 +271,13 @@ func main() {
 		if log.Metadata != "" {
 			metadataEntry.SetText(log.Metadata)
 		}
+		searchLog, err := io.LoadSearchLogWithStruct()
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+		history.InitSearchLog(searchLog)
+
 	})
 	app.Lifecycle().SetOnStopped(func() {
 		var filenames []string
@@ -279,6 +287,12 @@ func main() {
 		err := SaveLog(filenames, targetInput.Text, requestEntry.Text, responseEntry.Text, metadataEntry.Text)
 		if err != nil {
 			dialog.ShowError(err, window)
+			return
+		}
+		err = history.SaveLog()
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
 		}
 	})
 	window.ShowAndRun()
@@ -311,7 +325,7 @@ func SaveLog(filenames []string, target, request, response, metadata string) err
 	if err != nil {
 		return err
 	}
-	return io.SaveLog(marshal)
+	return io.SaveLog(io.AppLog, marshal)
 }
 
 type ResetUri struct {

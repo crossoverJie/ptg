@@ -16,3 +16,6 @@ message SearchLog{
   Log value=2;
   string method_info=3;
 }
+message SearchLogList{
+  repeated SearchLog search_log_list=1;
+}

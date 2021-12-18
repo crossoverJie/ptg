@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/crossoverJie/ptg/gui/io"
+	"github.com/golang/protobuf/proto"
 	"strings"
 )
 
@@ -139,4 +140,24 @@ func (h *History) drawHistoryButton(historyValue *io.SearchLog) {
 	})
 	h.historyButton.Add(button)
 	h.alreadyButtonList = append(h.alreadyButtonList, button)
+}
+
+func (h *History) SaveLog() error {
+	searchLogList := &io.SearchLogList{}
+	for _, v := range h.lruCache.List() {
+		historyValue := v.(*io.SearchLog)
+		searchLogList.SearchLogList = append(searchLogList.SearchLogList, historyValue)
+	}
+	marshal, err := proto.Marshal(searchLogList)
+	if err != nil {
+		return err
+	}
+	return io.SaveLog(io.AppSearchLog, marshal)
+}
+
+func (h *History) InitSearchLog(searchLog *io.SearchLogList) {
+	for _, log := range searchLog.SearchLogList {
+		h.drawHistoryButton(log)
+		h.lruCache.Put(log.Id, log)
+	}
 }

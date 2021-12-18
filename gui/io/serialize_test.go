@@ -18,14 +18,14 @@ func TestSaveLog(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	err = SaveLog(marshal)
+	err = SaveLog(AppLog, marshal)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func TestLoadLog(t *testing.T) {
-	bytes, err := LoadLog()
+	bytes, err := LoadLog(AppLog)
 	if err != nil {
 		panic(err)
 	}
@@ -44,4 +44,26 @@ func TestLoadLogWithStruct(t *testing.T) {
 		panic(err)
 	}
 	fmt.Println(withStruct)
+}
+
+func TestSaveLog1(t *testing.T) {
+	searchLogList := &SearchLogList{}
+	searchLogList.SearchLogList = append(searchLogList.SearchLogList, &SearchLog{
+		Id: 1,
+		Value: &Log{
+			Target:   "1212",
+			Request:  "4334",
+			Metadata: "434",
+			Response: "434",
+		},
+		MethodInfo: "23232",
+	})
+	marshal, err := proto.Marshal(searchLogList)
+	if err != nil {
+		panic(err)
+	}
+	err = SaveLog(AppSearchLog, marshal)
+	if err != nil {
+		panic(err)
+	}
 }
