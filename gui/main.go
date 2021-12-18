@@ -50,7 +50,7 @@ func main() {
 	searchAccordion := widget.NewAccordion()
 	searchEntry := widget.NewEntry()
 	historyButton := container.NewVBox()
-	history := NewHistory(10, historyButton, targetInput, requestEntry, metadataEntry, responseEntry)
+	history := NewHistory(10, historyButton, targetInput, requestEntry, metadataEntry, responseEntry, reqLabel)
 	historyId := 0
 
 	content := container.NewVBox()
@@ -213,15 +213,15 @@ func main() {
 
 		// Write history
 		historyId++
-		history.Put(historyId, &HistoryValue{
-			Id: historyId,
+		history.Put(historyId, &io.SearchLog{
+			Id: int32(historyId),
 			Value: &io.Log{
 				Target:   targetInput.Text,
 				Request:  requestEntry.Text,
 				Metadata: metadataEntry.Text,
 				Response: string(marshalIndent),
 			},
-			MethodInfo: methodInfo[0]},
+			MethodInfo: reqLabel.Text},
 		)
 
 	})
