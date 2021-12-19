@@ -116,6 +116,14 @@ func (o *Order) Create(ctx context.Context, in *v1.OrderApiCreate) (*v1.Order, e
 	}, nil
 }
 
+func (o *Order) Close(context.Context, *v1.CloseApiCreate) (*v1.Order, error) {
+	time.Sleep(200 * time.Millisecond)
+	return &v1.Order{
+		OrderId: 1000,
+		Reason:  nil,
+	}, nil
+}
+
 func TestParseServiceMethod(t *testing.T) {
 	s, m, err := ParseServiceMethod("order.v1.OrderService.Create")
 	fmt.Println(s, m, err)

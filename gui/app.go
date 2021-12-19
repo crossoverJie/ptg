@@ -3,8 +3,10 @@ package main
 const (
 	AppName                  = "PTG gRPC client"
 	AppWeight                = 1000
-	AppHeight                = 500
+	AppHeight                = 800
 	HelpUrl                  = "https://github.com/crossoverJie/ptg"
+	SearchFormText           = "SearchResult"
+	SearchFormPlaceHolder    = "keyword"
 	TargetFormText           = "Target:"
 	TargetFormHintText       = "Input target url"
 	RequestEntryPlaceHolder  = "Input request json"
@@ -16,11 +18,13 @@ const (
 )
 
 type App struct {
-	AppName             string
-	AppWidth, AppHeight float32
-	HelpUrl             string
-	RightRequest        *RightRequest
-	RightResponse       *RightResponse
+	AppName               string
+	AppWidth, AppHeight   float32
+	HelpUrl               string
+	SearchFormText        string
+	SearchFormPlaceHolder string
+	RightRequest          *RightRequest
+	RightResponse         *RightResponse
 }
 
 type RightRequest struct {
@@ -36,10 +40,12 @@ type RightResponse struct {
 
 func InitApp() *App {
 	return &App{
-		AppName:   AppName,
-		AppWidth:  AppWeight,
-		AppHeight: AppHeight,
-		HelpUrl:   HelpUrl,
+		AppName:               AppName,
+		AppWidth:              AppWeight,
+		AppHeight:             AppHeight,
+		HelpUrl:               HelpUrl,
+		SearchFormText:        SearchFormText,
+		SearchFormPlaceHolder: SearchFormPlaceHolder,
 		RightRequest: &RightRequest{
 			TargetFormText:           TargetFormText,
 			TargetFormHintText:       TargetFormHintText,

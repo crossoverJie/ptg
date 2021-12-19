@@ -10,3 +10,12 @@ message Log{
   string metadata = 4;
   string response = 5;
 }
+
+message SearchLog{
+  int32 id=1;
+  Log value=2;
+  string method_info=3;
+}
+message SearchLogList{
+  repeated SearchLog search_log_list=1;
+}
