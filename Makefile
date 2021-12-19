@@ -3,7 +3,8 @@ BINARY=ptg
 GOBUILD=go build -ldflags "-s -w" -o ${BINARY}
 GOCLEAN=go clean
 RMTARGZ=rm -rf *.gz
-VERSION=1.0.2
+RMMACAPP=rm -rf ptg.app
+VERSION=1.0.3
 
 # Build
 build:
@@ -58,3 +59,4 @@ pkg-win:
 pkg-macos:
 	fyne package -os darwin -src gui/ -icon pic/gopher.png -name ${BINARY} -appVersion $(VERSION)
 	tar czvf ${BINARY}-mac-gui.tar ./${BINARY}.app
+	$(RMMACAPP)
