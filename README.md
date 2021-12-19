@@ -5,6 +5,7 @@ Test the `gRPC` service like `postman`.
 
 ![](pic/show.gif)
 ![](pic/ptg.gif)
+![](pic/search.gif)
 
 
 # Features
