@@ -29,7 +29,7 @@ func (l *LruCache) Put(k, v interface{}) {
 	if l.values.Len() == l.size {
 		back := l.values.Back()
 		l.values.Remove(back)
-		delete(l.cacheMap, k)
+		delete(l.cacheMap, back)
 	}
 
 	front := l.values.PushFront(v)
