@@ -134,6 +134,26 @@ func main() {
 			w.SetFixedSize(true)
 			w.Show()
 		}),
+		widget.NewToolbarAction(theme.RadioButtonIcon(), func() {
+			w := fyne.CurrentApp().NewWindow("Performance test")
+			w.Resize(fyne.NewSize(ptgApp.AppWidth, ptgApp.AppHeight))
+
+			myCanvas := w.Canvas()
+			//blue := color.NRGBA{R: 0, G: 0, B: 180, A: 255}
+			//rect := canvas.NewRectangle(blue)
+			//myCanvas.SetContent(rect)
+
+			red := color.NRGBA{R: 0xff, G: 0x33, B: 0x33, A: 0xff}
+			circle := canvas.NewCircle(color.White)
+			circle.StrokeWidth = 4
+			circle.StrokeColor = red
+
+			line := canvas.NewLine(red)
+			myCanvas.SetContent(line)
+
+			w.SetFixedSize(true)
+			w.Show()
+		}),
 	)
 	content.Add(toolbar)
 	content.Add(searchAccordion)
