@@ -95,7 +95,12 @@ func main() {
 						dialog.ShowError(err, window)
 						return
 					}
-					json, err := GetParseAdapter(methodInfo[1]).Parse().RequestJSON(service, method)
+					adapter, err := GetParseAdapter(methodInfo[1])
+					if err != nil {
+						dialog.ShowError(err, window)
+						return
+					}
+					json, err := adapter.Parse().RequestJSON(service, method)
 					if err != nil {
 						dialog.ShowError(err, window)
 						return
@@ -116,7 +121,11 @@ func main() {
 			fileOpen.Show()
 		}),
 		widget.NewToolbarAction(theme.ViewRefreshIcon(), func() {
-			dialog.ShowInformation("Notice", "coming soon", window)
+			content.Remove(serviceAccordion)
+			serviceAccordionRemove = true
+			serviceAccordion.Items = nil
+			dialog.ShowInformation("Notice", "Reload success.", window)
+			ReloadReflect(newProto)
 		}),
 		widget.NewToolbarAction(theme.DeleteIcon(), func() {
 			ClearReflect()
@@ -199,7 +208,12 @@ func main() {
 			return
 		}
 		index := methodInfo[1]
-		parse := GetParseAdapter(index).Parse()
+		adapter, err := GetParseAdapter(index)
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+		parse := adapter.Parse()
 		mds, err := parse.MethodDescriptor(service, method)
 		if err != nil {
 			dialog.ShowError(err, window)

@@ -32,6 +32,7 @@ message Reason{
 
 message CloseApiCreate{
   int64 order_id = 1;
+  string remark = 3;
 }
 
 
