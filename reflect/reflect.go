@@ -87,7 +87,27 @@ func (p *ParseReflect) InvokeRpc(ctx context.Context, stub grpcdynamic.Stub, mds
 	if err != nil {
 		return nil, err
 	}
-	return stub.InvokeRpc(ctx, mds, messages[0])
+	return stub.InvokeRpc(ctx, mds, messages[0], opts...)
+}
+
+// make unary server stream RPC
+func (p *ParseReflect) InvokeServerStreamRpc(ctx context.Context, stub grpcdynamic.Stub, mds *desc.MethodDescriptor, data string, opts ...grpc.CallOption) (*grpcdynamic.ServerStream, error) {
+
+	messages, err := createPayloadsFromJSON(mds, data)
+	if err != nil {
+		return nil, err
+	}
+	return stub.InvokeRpcServerStream(ctx, mds, messages[0], opts...)
+}
+
+// make unary client stream RPC
+func (p *ParseReflect) InvokeClientStreamRpc(ctx context.Context, stub grpcdynamic.Stub, mds *desc.MethodDescriptor, opts ...grpc.CallOption) (*grpcdynamic.ClientStream, error) {
+	return stub.InvokeRpcClientStream(ctx, mds, opts...)
+}
+
+// make unary bidi stream RPC
+func (p *ParseReflect) InvokeBidiStreamRpc(ctx context.Context, stub grpcdynamic.Stub, mds *desc.MethodDescriptor, opts ...grpc.CallOption) (*grpcdynamic.BidiStream, error) {
+	return stub.InvokeRpcBidiStream(ctx, mds, opts...)
 }
 
 func convertMessageToMap(message *desc.MessageDescriptor) map[string]interface{} {

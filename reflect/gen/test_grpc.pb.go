@@ -20,6 +20,9 @@ const _ = grpc.SupportPackageIsVersion7
 type OrderServiceClient interface {
 	Create(ctx context.Context, in *OrderApiCreate, opts ...grpc.CallOption) (*Order, error)
 	Close(ctx context.Context, in *CloseApiCreate, opts ...grpc.CallOption) (*Order, error)
+	ServerStream(ctx context.Context, in *OrderApiCreate, opts ...grpc.CallOption) (OrderService_ServerStreamClient, error)
+	ClientStream(ctx context.Context, opts ...grpc.CallOption) (OrderService_ClientStreamClient, error)
+	BdStream(ctx context.Context, opts ...grpc.CallOption) (OrderService_BdStreamClient, error)
 }
 
 type orderServiceClient struct {
@@ -48,12 +51,112 @@ func (c *orderServiceClient) Close(ctx context.Context, in *CloseApiCreate, opts
 	return out, nil
 }
 
+func (c *orderServiceClient) ServerStream(ctx context.Context, in *OrderApiCreate, opts ...grpc.CallOption) (OrderService_ServerStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &OrderService_ServiceDesc.Streams[0], "/order.v1.OrderService/ServerStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &orderServiceServerStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type OrderService_ServerStreamClient interface {
+	Recv() (*Order, error)
+	grpc.ClientStream
+}
+
+type orderServiceServerStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *orderServiceServerStreamClient) Recv() (*Order, error) {
+	m := new(Order)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *orderServiceClient) ClientStream(ctx context.Context, opts ...grpc.CallOption) (OrderService_ClientStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &OrderService_ServiceDesc.Streams[1], "/order.v1.OrderService/ClientStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &orderServiceClientStreamClient{stream}
+	return x, nil
+}
+
+type OrderService_ClientStreamClient interface {
+	Send(*OrderApiCreate) error
+	CloseAndRecv() (*Order, error)
+	grpc.ClientStream
+}
+
+type orderServiceClientStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *orderServiceClientStreamClient) Send(m *OrderApiCreate) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *orderServiceClientStreamClient) CloseAndRecv() (*Order, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(Order)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *orderServiceClient) BdStream(ctx context.Context, opts ...grpc.CallOption) (OrderService_BdStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &OrderService_ServiceDesc.Streams[2], "/order.v1.OrderService/BdStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &orderServiceBdStreamClient{stream}
+	return x, nil
+}
+
+type OrderService_BdStreamClient interface {
+	Send(*OrderApiCreate) error
+	Recv() (*Order, error)
+	grpc.ClientStream
+}
+
+type orderServiceBdStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *orderServiceBdStreamClient) Send(m *OrderApiCreate) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *orderServiceBdStreamClient) Recv() (*Order, error) {
+	m := new(Order)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // OrderServiceServer is the server API for OrderService service.
 // All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility
 type OrderServiceServer interface {
 	Create(context.Context, *OrderApiCreate) (*Order, error)
 	Close(context.Context, *CloseApiCreate) (*Order, error)
+	ServerStream(*OrderApiCreate, OrderService_ServerStreamServer) error
+	ClientStream(OrderService_ClientStreamServer) error
+	BdStream(OrderService_BdStreamServer) error
 	mustEmbedUnimplementedOrderServiceServer()
 }
 
@@ -66,6 +169,15 @@ func (UnimplementedOrderServiceServer) Create(context.Context, *OrderApiCreate) 
 }
 func (UnimplementedOrderServiceServer) Close(context.Context, *CloseApiCreate) (*Order, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Close not implemented")
+}
+func (UnimplementedOrderServiceServer) ServerStream(*OrderApiCreate, OrderService_ServerStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method ServerStream not implemented")
+}
+func (UnimplementedOrderServiceServer) ClientStream(OrderService_ClientStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method ClientStream not implemented")
+}
+func (UnimplementedOrderServiceServer) BdStream(OrderService_BdStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BdStream not implemented")
 }
 func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 
@@ -116,6 +228,79 @@ func _OrderService_Close_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderService_ServerStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(OrderApiCreate)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(OrderServiceServer).ServerStream(m, &orderServiceServerStreamServer{stream})
+}
+
+type OrderService_ServerStreamServer interface {
+	Send(*Order) error
+	grpc.ServerStream
+}
+
+type orderServiceServerStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *orderServiceServerStreamServer) Send(m *Order) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _OrderService_ClientStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(OrderServiceServer).ClientStream(&orderServiceClientStreamServer{stream})
+}
+
+type OrderService_ClientStreamServer interface {
+	SendAndClose(*Order) error
+	Recv() (*OrderApiCreate, error)
+	grpc.ServerStream
+}
+
+type orderServiceClientStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *orderServiceClientStreamServer) SendAndClose(m *Order) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *orderServiceClientStreamServer) Recv() (*OrderApiCreate, error) {
+	m := new(OrderApiCreate)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _OrderService_BdStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(OrderServiceServer).BdStream(&orderServiceBdStreamServer{stream})
+}
+
+type OrderService_BdStreamServer interface {
+	Send(*Order) error
+	Recv() (*OrderApiCreate, error)
+	grpc.ServerStream
+}
+
+type orderServiceBdStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *orderServiceBdStreamServer) Send(m *Order) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *orderServiceBdStreamServer) Recv() (*OrderApiCreate, error) {
+	m := new(OrderApiCreate)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -132,7 +317,24 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OrderService_Close_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ServerStream",
+			Handler:       _OrderService_ServerStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ClientStream",
+			Handler:       _OrderService_ClientStream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BdStream",
+			Handler:       _OrderService_BdStream_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "reflect/gen/test.proto",
 }
 
