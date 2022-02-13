@@ -157,7 +157,7 @@ func TestParseReflect_InvokeClientStreamRpc(t *testing.T) {
 			panic(err)
 		}
 		time.Sleep(1 * time.Second)
-		messages, _ := createPayloadsFromJSON(mds, data)
+		messages, _ := CreatePayloadsFromJSON(mds, data)
 		rpc.SendMsg(messages[0])
 	}
 	receive, err := rpc.CloseAndReceive()
@@ -195,7 +195,7 @@ func TestParseReflect_InvokeBidiStreamRpc(t *testing.T) {
 			panic(err)
 		}
 		time.Sleep(1 * time.Second)
-		messages, _ := createPayloadsFromJSON(mds, data)
+		messages, _ := CreatePayloadsFromJSON(mds, data)
 		rpc.SendMsg(messages[0])
 
 		receive, _ := rpc.RecvMsg()
@@ -273,6 +273,9 @@ func (o *Order) ClientStream(rs v1.OrderService_ClientStreamServer) error {
 			})
 			log.Println(value)
 			return nil
+		}
+		if err != nil {
+			return err
 		}
 		value = append(value, recv.OrderId)
 		log.Printf("ClientStream receiv msg %v", recv.OrderId)

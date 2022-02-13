@@ -83,7 +83,7 @@ func (p *ParseReflect) MethodDescriptor(serviceName, methodName string) (*desc.M
 // make unary RPC
 func (p *ParseReflect) InvokeRpc(ctx context.Context, stub grpcdynamic.Stub, mds *desc.MethodDescriptor, data string, opts ...grpc.CallOption) (proto.Message, error) {
 
-	messages, err := createPayloadsFromJSON(mds, data)
+	messages, err := CreatePayloadsFromJSON(mds, data)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (p *ParseReflect) InvokeRpc(ctx context.Context, stub grpcdynamic.Stub, mds
 // make unary server stream RPC
 func (p *ParseReflect) InvokeServerStreamRpc(ctx context.Context, stub grpcdynamic.Stub, mds *desc.MethodDescriptor, data string, opts ...grpc.CallOption) (*grpcdynamic.ServerStream, error) {
 
-	messages, err := createPayloadsFromJSON(mds, data)
+	messages, err := CreatePayloadsFromJSON(mds, data)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func ParseServiceMethod(svcAndMethod string) (string, string, error) {
 	}
 }
 
-func createPayloadsFromJSON(mds *desc.MethodDescriptor, data string) ([]*dynamic.Message, error) {
+func CreatePayloadsFromJSON(mds *desc.MethodDescriptor, data string) ([]*dynamic.Message, error) {
 	md := mds.GetInputType()
 	var inputs []*dynamic.Message
 

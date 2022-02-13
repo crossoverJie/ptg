@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/crossoverJie/ptg/gui/call"
 	"github.com/crossoverJie/ptg/gui/io"
 	"github.com/crossoverJie/ptg/reflect"
 	_ "github.com/crossoverJie/ptg/reflect"
@@ -235,15 +236,29 @@ func main() {
 		}
 		stub := grpcdynamic.NewStub(conn)
 		processBar.Show()
-		rpc, err := parse.InvokeRpc(ctx, stub, mds, requestEntry.Text)
+		// call
+		callBuilder := call.NewCallBuilder().Parse(parse).
+			ResponseEntry(responseEntry).
+			RequestEntry(requestEntry).
+			Mds(mds).
+			Stub(stub).
+			RequestEntry(requestEntry).
+			ProcessBar(processBar).
+			ErrorHandle(func(window fyne.Window, processBar *widget.ProgressBarInfinite, err error) {
+				processBar.Hide()
+				dialog.ShowError(err, window)
+			})
+		response, err := callBuilder.Run(ctx)
+		//response ,err := call.NewCall(ctx, parse, responseEntry, mds, stub, requestEntry.Text)
+		//rpc, err := parse.InvokeRpc(ctx, stub, mds, requestEntry.Text)
 		if err != nil {
 			processBar.Hide()
 			dialog.ShowError(err, window)
 			return
 		}
 		processBar.Hide()
-		marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
-		responseEntry.SetText(string(marshalIndent))
+		//marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
+		//responseEntry.SetText(string(marshalIndent))
 
 		// Write history
 		historyId++
@@ -253,7 +268,7 @@ func main() {
 				Target:   targetInput.Text,
 				Request:  requestEntry.Text,
 				Metadata: metadataEntry.Text,
-				Response: string(marshalIndent),
+				Response: response,
 			},
 			MethodInfo: reqLabel.Text},
 		)
