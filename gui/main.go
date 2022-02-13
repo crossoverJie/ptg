@@ -249,16 +249,12 @@ func main() {
 				dialog.ShowError(err, window)
 			})
 		response, err := callBuilder.Run(ctx)
-		//response ,err := call.NewCall(ctx, parse, responseEntry, mds, stub, requestEntry.Text)
-		//rpc, err := parse.InvokeRpc(ctx, stub, mds, requestEntry.Text)
 		if err != nil {
 			processBar.Hide()
 			dialog.ShowError(err, window)
 			return
 		}
 		processBar.Hide()
-		//marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
-		//responseEntry.SetText(string(marshalIndent))
 
 		// Write history
 		historyId++
