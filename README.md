@@ -6,6 +6,9 @@ Test the `gRPC` service like `postman`.
 ![](pic/show.gif)
 ![](pic/ptg.gif)
 ![](pic/search.gif)
+![](pic/server-stream-min.gif)
+![](pic/client-stream-min.gif)
+![](pic/bd-stream-min.gif)
 
 
 # Features
@@ -14,7 +17,7 @@ Test the `gRPC` service like `postman`.
 - [x] Metadata support.
 - [x] Data persistence.
 - [x] Search history.
-- [ ] Stream call.
+- [X] Stream call.
 - [ ] Benchmark GUI.
 
 # Install

@@ -4,7 +4,7 @@ GOBUILD=go build -ldflags "-s -w" -o ${BINARY}
 GOCLEAN=go clean
 RMTARGZ=rm -rf *.gz
 RMMACAPP=rm -rf ptg.app
-VERSION=1.0.3
+VERSION=1.0.4
 
 # Build
 build:

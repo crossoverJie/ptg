@@ -253,7 +253,7 @@ func (o *Order) Close(ctx context.Context, req *v1.CloseApiCreate) (*v1.Order, e
 
 func (o *Order) ServerStream(in *v1.OrderApiCreate, rs v1.OrderService_ServerStreamServer) error {
 	for i := 0; i < 5; i++ {
-		time.Sleep(1 * time.Second)
+		time.Sleep(200 * time.Millisecond)
 		rs.Send(&v1.Order{
 			OrderId: in.OrderId,
 			Reason:  nil,
