@@ -83,11 +83,31 @@ func (p *ParseReflect) MethodDescriptor(serviceName, methodName string) (*desc.M
 // make unary RPC
 func (p *ParseReflect) InvokeRpc(ctx context.Context, stub grpcdynamic.Stub, mds *desc.MethodDescriptor, data string, opts ...grpc.CallOption) (proto.Message, error) {
 
-	messages, err := createPayloadsFromJSON(mds, data)
+	messages, err := CreatePayloadsFromJSON(mds, data)
 	if err != nil {
 		return nil, err
 	}
-	return stub.InvokeRpc(ctx, mds, messages[0])
+	return stub.InvokeRpc(ctx, mds, messages[0], opts...)
+}
+
+// make unary server stream RPC
+func (p *ParseReflect) InvokeServerStreamRpc(ctx context.Context, stub grpcdynamic.Stub, mds *desc.MethodDescriptor, data string, opts ...grpc.CallOption) (*grpcdynamic.ServerStream, error) {
+
+	messages, err := CreatePayloadsFromJSON(mds, data)
+	if err != nil {
+		return nil, err
+	}
+	return stub.InvokeRpcServerStream(ctx, mds, messages[0], opts...)
+}
+
+// make unary client stream RPC
+func (p *ParseReflect) InvokeClientStreamRpc(ctx context.Context, stub grpcdynamic.Stub, mds *desc.MethodDescriptor, opts ...grpc.CallOption) (*grpcdynamic.ClientStream, error) {
+	return stub.InvokeRpcClientStream(ctx, mds, opts...)
+}
+
+// make unary bidi stream RPC
+func (p *ParseReflect) InvokeBidiStreamRpc(ctx context.Context, stub grpcdynamic.Stub, mds *desc.MethodDescriptor, opts ...grpc.CallOption) (*grpcdynamic.BidiStream, error) {
+	return stub.InvokeRpcBidiStream(ctx, mds, opts...)
 }
 
 func convertMessageToMap(message *desc.MessageDescriptor) map[string]interface{} {
@@ -134,7 +154,7 @@ func ParseServiceMethod(svcAndMethod string) (string, string, error) {
 	}
 }
 
-func createPayloadsFromJSON(mds *desc.MethodDescriptor, data string) ([]*dynamic.Message, error) {
+func CreatePayloadsFromJSON(mds *desc.MethodDescriptor, data string) ([]*dynamic.Message, error) {
 	md := mds.GetInputType()
 	var inputs []*dynamic.Message
 

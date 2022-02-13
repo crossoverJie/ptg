@@ -10,6 +10,11 @@ service OrderService{
 
   rpc Close(CloseApiCreate) returns (Order) {}
 
+  rpc ServerStream(OrderApiCreate) returns (stream Order) {}
+
+  rpc ClientStream(stream OrderApiCreate) returns (Order) {}
+
+  rpc BdStream(stream OrderApiCreate) returns (stream Order) {}
 }
 
 service TestService{
@@ -32,6 +37,7 @@ message Reason{
 
 message CloseApiCreate{
   int64 order_id = 1;
+  string remark = 3;
 }
 
 

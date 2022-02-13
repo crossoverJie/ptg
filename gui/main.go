@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/crossoverJie/ptg/gui/call"
 	"github.com/crossoverJie/ptg/gui/io"
 	"github.com/crossoverJie/ptg/reflect"
 	_ "github.com/crossoverJie/ptg/reflect"
@@ -95,7 +96,12 @@ func main() {
 						dialog.ShowError(err, window)
 						return
 					}
-					json, err := GetParseAdapter(methodInfo[1]).Parse().RequestJSON(service, method)
+					adapter, err := GetParseAdapter(methodInfo[1])
+					if err != nil {
+						dialog.ShowError(err, window)
+						return
+					}
+					json, err := adapter.Parse().RequestJSON(service, method)
 					if err != nil {
 						dialog.ShowError(err, window)
 						return
@@ -116,7 +122,11 @@ func main() {
 			fileOpen.Show()
 		}),
 		widget.NewToolbarAction(theme.ViewRefreshIcon(), func() {
-			dialog.ShowInformation("Notice", "coming soon", window)
+			content.Remove(serviceAccordion)
+			serviceAccordionRemove = true
+			serviceAccordion.Items = nil
+			dialog.ShowInformation("Notice", "Reload success.", window)
+			ReloadReflect(newProto)
 		}),
 		widget.NewToolbarAction(theme.DeleteIcon(), func() {
 			ClearReflect()
@@ -134,6 +144,26 @@ func main() {
 			w.SetFixedSize(true)
 			w.Show()
 		}),
+		//widget.NewToolbarAction(theme.RadioButtonIcon(), func() {
+		//	w := fyne.CurrentApp().NewWindow("Performance test")
+		//	w.Resize(fyne.NewSize(ptgApp.AppWidth, ptgApp.AppHeight))
+		//
+		//	myCanvas := w.Canvas()
+		//	//blue := color.NRGBA{R: 0, G: 0, B: 180, A: 255}
+		//	//rect := canvas.NewRectangle(blue)
+		//	//myCanvas.SetContent(rect)
+		//
+		//	red := color.NRGBA{R: 0xff, G: 0x33, B: 0x33, A: 0xff}
+		//	circle := canvas.NewCircle(color.White)
+		//	circle.StrokeWidth = 4
+		//	circle.StrokeColor = red
+		//
+		//	line := canvas.NewLine(red)
+		//	myCanvas.SetContent(line)
+		//
+		//	w.SetFixedSize(true)
+		//	w.Show()
+		//}),
 	)
 	content.Add(toolbar)
 	content.Add(searchAccordion)
@@ -179,7 +209,12 @@ func main() {
 			return
 		}
 		index := methodInfo[1]
-		parse := GetParseAdapter(index).Parse()
+		adapter, err := GetParseAdapter(index)
+		if err != nil {
+			dialog.ShowError(err, window)
+			return
+		}
+		parse := adapter.Parse()
 		mds, err := parse.MethodDescriptor(service, method)
 		if err != nil {
 			dialog.ShowError(err, window)
@@ -201,15 +236,25 @@ func main() {
 		}
 		stub := grpcdynamic.NewStub(conn)
 		processBar.Show()
-		rpc, err := parse.InvokeRpc(ctx, stub, mds, requestEntry.Text)
+		// call
+		callBuilder := call.NewCallBuilder().Parse(parse).
+			ResponseEntry(responseEntry).
+			RequestEntry(requestEntry).
+			Mds(mds).
+			Stub(stub).
+			RequestEntry(requestEntry).
+			ProcessBar(processBar).
+			ErrorHandle(func(window fyne.Window, processBar *widget.ProgressBarInfinite, err error) {
+				processBar.Hide()
+				dialog.ShowError(err, window)
+			})
+		response, err := callBuilder.Run(ctx)
 		if err != nil {
 			processBar.Hide()
 			dialog.ShowError(err, window)
 			return
 		}
 		processBar.Hide()
-		marshalIndent, _ := json.MarshalIndent(rpc, "", "\t")
-		responseEntry.SetText(string(marshalIndent))
 
 		// Write history
 		historyId++
@@ -219,7 +264,7 @@ func main() {
 				Target:   targetInput.Text,
 				Request:  requestEntry.Text,
 				Metadata: metadataEntry.Text,
-				Response: string(marshalIndent),
+				Response: response,
 			},
 			MethodInfo: reqLabel.Text},
 		)

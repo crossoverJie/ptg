@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"fyne.io/fyne/v2"
 	"github.com/crossoverJie/ptg/reflect"
+	"github.com/pkg/errors"
 	"sync/atomic"
 )
 
@@ -59,14 +61,14 @@ func ClearReflect() {
 	index = 0
 }
 
-func ResetReflect() {
+func ReloadReflect(f func(uri fyne.URIReadCloser, err error)) {
 	var filenameList []string
 	for k := range parseContainerMap {
 		filenameList = append(filenameList, k)
 	}
 	ClearReflect()
 	for _, filename := range filenameList {
-		RegisterReflect(filename)
+		f(&ResetUri{Filename: filename}, nil)
 	}
 }
 
@@ -78,8 +80,11 @@ func genIndex() string {
 	return fmt.Sprint(atomic.AddInt64(&index, 1))
 }
 
-func GetParseAdapter(index string) *ParseReflectAdapter {
+func GetParseAdapter(index string) (*ParseReflectAdapter, error) {
 	filename := containerMap[index]
-	registerReflect, _, _ := RegisterReflect(filename)
-	return registerReflect
+	registerReflect, exit, _ := RegisterReflect(filename)
+	if !exit {
+		return nil, errors.New("proto not register")
+	}
+	return registerReflect, nil
 }
