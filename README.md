@@ -3,12 +3,17 @@ Performance testing tool (Go), It is also a **GUI** `gRPC` client.
 
 Test the `gRPC` service like `postman`.
 
+
 ![](pic/show.gif)
 ![](pic/ptg.gif)
 ![](pic/search.gif)
-![](pic/server-stream-min.gif)
-![](pic/client-stream-min.gif)
-![](pic/bd-stream-min.gif)
+<details>
+  <summary>More screenshot</summary>
+   <img src="pic/server-stream-min.gif">
+   <img src="pic/client-stream-min.gif">
+   <img src="pic/bd-stream-min.gif">   
+
+</details>
 
 
 # Features
