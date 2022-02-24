@@ -118,7 +118,7 @@ func main() {
 			&cli.StringSliceFlag{
 				Name:        "header",
 				Aliases:     []string{"H"},
-				Usage:       "HTTP header to add to request, e.g. \"-H \"Content-Type: application/json\"\"",
+				Usage:       "HTTP header to add to request, e.g. -H \"Content-Type: application/json\"",
 				Required:    false,
 				DefaultText: "",
 				Destination: &headerSlice,
