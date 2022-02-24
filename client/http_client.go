@@ -22,7 +22,7 @@ type httpClient struct {
 func (c *httpClient) Request() (*meta.Response, error) {
 	var payload io.Reader
 	if len(c.RequestBody) > 0 {
-		payload = strings.NewReader(`{"name":"abc"}`)
+		payload = strings.NewReader(c.RequestBody)
 	}
 	req, err := http.NewRequest(c.Method, c.Url, payload)
 	//req.Close = true
