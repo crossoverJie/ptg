@@ -94,6 +94,12 @@ Slowest Request:        840.680771ms
 Number of Errors:       0
 ```
 
+> POST example
+
+```shell script
+ptg -t 2 -proto http -c 2 -M POST -H "Content-Type: application/json"  -body test.json -tg "http://xx/create"
+```
+
 ## gRPC(unary call)
 
 ```shell script
