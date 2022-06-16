@@ -54,7 +54,7 @@ func main() {
 				Name:  "thread",
 				Usage: "-t 10",
 				//Value:       1000,
-				DefaultText: "1 thread",
+				DefaultText: "1",
 				Aliases:     []string{"t"},
 				Required:    true,
 				Destination: &thread,
