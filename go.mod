@@ -7,6 +7,7 @@ require (
 	github.com/cheggaaa/pb/v3 v3.0.5
 	github.com/docker/go-units v0.4.0
 	github.com/fatih/color v1.13.0
+	github.com/flopp/go-findfont v0.1.0 // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/jhump/protoreflect v1.10.1
 	github.com/pkg/errors v0.9.1

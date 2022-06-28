@@ -238,7 +238,10 @@ func (o *Order) Create(ctx context.Context, in *v1.OrderApiCreate) (*v1.Order, e
 	fmt.Println(in.OrderId)
 	return &v1.Order{
 		OrderId: in.OrderId,
-		Reason:  nil,
+		Reason: []*v1.Reason{{
+			Id:     0,
+			Remark: in.Remark,
+		}},
 	}, nil
 }
 
