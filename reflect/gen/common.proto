@@ -1,0 +1,7 @@
+syntax = "proto3";
+option go_package = "github.com/crossoverJie/ptg/proto/order/v1";
+package order.v1;
+
+message Common{
+  string header=1;
+}

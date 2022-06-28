@@ -2,6 +2,8 @@
 syntax = "proto3";
 option go_package = "github.com/crossoverJie/ptg/proto/order/v1";
 
+import "reflect/gen/common.proto";
+
 package order.v1;
 
 service OrderService{
@@ -51,5 +53,6 @@ message OrderApiCreate{
 message Order{
   int64 order_id = 1;
   repeated Reason reason = 2;
+  Common common=3;
 }
 
