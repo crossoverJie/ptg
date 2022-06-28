@@ -1,5 +1,11 @@
 package main
 
+import (
+	"github.com/flopp/go-findfont"
+	"os"
+	"strings"
+)
+
 const (
 	AppName                  = "PTG gRPC client"
 	AppWeight                = 1000
@@ -39,6 +45,16 @@ type RightResponse struct {
 }
 
 func InitApp() *App {
+	// init font
+	fontPaths := findfont.List()
+	for _, path := range fontPaths {
+		//楷体:simkai.ttf
+		//黑体:simhei.ttf
+		if strings.Contains(path, "阿里汉仪智能黑体") || strings.Contains(path, "simkai.ttf") || strings.Contains(path, "msyhl.ttc") {
+			os.Setenv("FYNE_FONT", path)
+			break
+		}
+	}
 	return &App{
 		AppName:               AppName,
 		AppWidth:              AppWeight,

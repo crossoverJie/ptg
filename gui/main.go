@@ -24,6 +24,7 @@ import (
 	"image/color"
 	gio "io"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -341,6 +342,7 @@ func main() {
 		}
 	})
 	window.ShowAndRun()
+	os.Unsetenv("FYNE_FONT")
 }
 
 func buildWithMetadata(ctx context.Context, meta string) (context.Context, error) {
