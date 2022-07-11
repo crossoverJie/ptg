@@ -26,7 +26,7 @@ func NewClient(method, url, requestBody string, meta *meta.Meta) Client {
 			httpClient: &http.Client{
 				Transport: &http.Transport{
 					DisableCompression:    false,
-					ResponseHeaderTimeout: time.Millisecond * time.Duration(1000),
+					ResponseHeaderTimeout: time.Millisecond * time.Duration(5000),
 					DisableKeepAlives:     false,
 				},
 			},
